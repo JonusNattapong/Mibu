@@ -1,0 +1,57 @@
+{
+  "name": "auditorai",
+  "version": "1.5.0",
+  "description": "Strategic Security Auditing and Resilience Lab",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JonusNattapong/AuditorAi.git"
+  },
+  "bugs": {
+    "url": "https://github.com/JonusNattapong/AuditorAi/issues"
+  },
+  "homepage": "https://github.com/JonusNattapong/AuditorAi#readme",
+  "main": "index.js",
+  "bin": {
+    "auditorai": "index.js",
+    "pi": "index.js"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "web": "node server/index.js",
+    "tui": "node cli/index.js",
+    "dev": "node --watch server/index.js",
+    "check": "node --check server/index.js && node --check cli/index.js"
+  },
+  "keywords": [
+    "github",
+    "blueprompt",
+    "reverse-engineering",
+    "ai",
+    "openai",
+    "gemini",
+    "anthropic",
+    "groq",
+    "codexray",
+    "bluecode",
+    "express"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.14.0",
+    "boxen": "^5.1.2",
+    "chalk": "^4.1.2",
+    "cheerio": "^1.2.0",
+    "dotenv": "^16.6.1",
+    "eventsource-parser": "^3.0.6",
+    "express": "^5.1.0",
+    "figures": "^3.2.0",
+    "gradient-string": "^3.0.0",
+    "inquirer": "^8.2.7",
+    "js-beautify": "^1.15.4",
+    "ora": "^5.4.1",
+    "playwright": "^1.59.1",
+    "simple-git": "^3.35.2",
+    "turndown": "^7.2.4",
+    "wappalyzer-core": "^7.0.3"
+  }
+}

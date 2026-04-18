@@ -1,0 +1,26 @@
+# Project Secrets & Config
+.env
+.npmrc
+.gemini/
+.git/
+.vscode/
+
+# Assets & Documentation
+assets/*.png
+assets/*.mp4
+output/
+screenshots/
+
+# Deep Analysis Workspaces (นายแง่ะอะไรไว้ ต้องไม่ให้ใครเห็น!)
+workspaces/
+temp/
+tmp/
+
+# Logs & Debugging
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Node Modules (NPM จัดการเองอยู่แล้ว)
+node_modules/

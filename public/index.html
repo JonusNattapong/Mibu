@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SECURITY AUDITOR | Strategic Intelligence Dashboard</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Markdown Renderer -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="dark-theme">
+    <div class="grid-background"></div>
+    
+    <div class="container">
+        <header class="app-header">
+            <div class="logo-area">
+                <i class="fas fa-microchip logo-icon"></i>
+                <div class="logo-text">
+                    <h1>SECURITY AUDITOR AI</h1>
+                    <p>Strategic Security Auditing & Resilience</p>
+                </div>
+            </div>
+            <div class="system-status" id="server-health">
+                <span class="status-indicator"></span>
+                <span class="status-text">Checking Server...</span>
+            </div>
+        </header>
+
+        <main class="dashboard">
+            <!-- Bento Input Section -->
+            <div class="glass-card bento-input">
+                <header class="card-header">
+                    <h2><i class="fas fa-terminal"></i> Command Center</h2>
+                </header>
+                <div class="form-content">
+                    <div class="input-group main-input">
+                        <label for="repo-url"><i class="fas fa-search"></i> Research Topic or Target</label>
+                        <input type="text" id="repo-url" placeholder="Ask anything... or paste GitHub URL / Local Path" autocomplete="off">
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label for="provider"><i class="fas fa-brain"></i> AI Provider</label>
+                            <select id="provider"></select>
+                        </div>
+                        <div class="input-group">
+                            <label for="model"><i class="fas fa-robot"></i> Model ID</label>
+                            <input type="text" id="model" placeholder="Default model...">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label for="output-style"><i class="fas fa-palette"></i> Style</label>
+                            <select id="output-style">
+                                <option value="summary">Summary Findings</option>
+                                <option value="deep">Deep Investigation</option>
+                                <option value="step-by-step">Step-by-Step Discovery</option>
+                                <option value="refactoring">Refactoring & Optimization</option>
+                                <option value="security">Strategic Risk Assessment</option>
+                                <option value="perfection">Strategic Security Audit</option>
+                                <option value="blueprint" selected>Full Security Hardening Log</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label for="language"><i class="fas fa-language"></i> Language</label>
+                            <select id="language">
+                                <option value="Thai">Thai</option>
+                                <option value="English">English</option>
+                                <option value="Bilingual">Bilingual</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="goal"><i class="fas fa-bullseye"></i> Analysis Goal</label>
+                        <input type="text" id="goal" placeholder="e.g. Identify vulnerabilities in the autonomous agent logic">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="extra-context"><i class="fas fa-plus-circle"></i> Extra Context (Optional)</label>
+                        <textarea id="extra-context" rows="3" placeholder="Add specific files or folders to focus on..."></textarea>
+                    </div>
+
+                    <div class="action-row">
+                        <button id="analyze-btn" class="btn-primary">
+                            <span class="btn-text">Strategic Security Assessment</span>
+                            <i class="fas fa-search-dollar btn-icon"></i>
+                        </button>
+                        <button id="agent-btn" class="btn-secondary">
+                            <span class="btn-text">Global Resilience Audit</span>
+                            <i class="fas fa-globe btn-icon"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bento Status Section -->
+            <div class="glass-card bento-status">
+                <header class="card-header">
+                    <h2><i class="fas fa-stream"></i> Operation Logs</h2>
+                </header>
+                <div id="status-log" class="log-viewer">
+                    <div class="log-entry system">Welcome to Security Auditor Lab. Initializing reconnaissance...</div>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <section class="section-results">
+                <!-- Metadata Card -->
+                <div class="glass-card bento-meta">
+                    <header class="card-header">
+                        <h2><i class="fas fa-database"></i> Metadata</h2>
+                        <button class="btn-icon" id="copy-meta-btn" title="Copy Metadata"><i class="far fa-copy"></i></button>
+                    </header>
+                    <div class="meta-grid">
+                        <div class="meta-item">
+                            <span class="label">Repo</span>
+                            <span class="value" id="meta-repo">-</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="label">Branch</span>
+                            <span class="value" id="meta-branch">-</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="label">Type</span>
+                            <span class="value" id="meta-type">-</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="label">Path</span>
+                            <span class="value" id="meta-path">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Context Card -->
+                <div class="glass-card bento-context">
+                    <header class="card-header">
+                        <h2><i class="fas fa-folder-open"></i> Collected Context</h2>
+                        <button class="btn-icon" id="copy-context-btn" title="Copy Context"><i class="far fa-copy"></i></button>
+                    </header>
+                    <div class="code-viewer">
+                        <textarea id="context-output" readonly placeholder="Target repository structure will appear here..."></textarea>
+                    </div>
+                </div>
+
+                <div class="glass-card bento-draft">
+                    <header class="card-header">
+                        <div class="title-with-icon">
+                            <i class="fas fa-pen-to-square insight-icon"></i>
+                            <h2>Live Result Draft</h2>
+                        </div>
+                        <div class="card-header-actions">
+                            <span id="draft-status" class="draft-status">Idle</span>
+                            <button class="btn-icon" id="copy-draft-btn" title="Copy Draft"><i class="far fa-copy"></i></button>
+                        </div>
+                    </header>
+                    <div class="code-viewer draft-viewer">
+                        <textarea id="draft-output" readonly placeholder="Agent sandbox draft will stream here as it evolves..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Analysis Card -->
+                <div class="glass-card bento-analysis">
+                    <header class="card-header">
+                        <div class="title-with-icon">
+                            <i class="fas fa-wand-magic-sparkles insight-icon"></i>
+                            <h2>AI Insight Result</h2>
+                        </div>
+                        <button class="btn-icon primary" id="copy-analysis-btn" title="Copy Analysis"><i class="far fa-copy"></i></button>
+                        <div class="export-dropdown" id="export-dropdown">
+                            <button class="btn-export" id="export-toggle" title="Export Analysis">
+                                <i class="fas fa-download"></i> Export
+                                <i class="fas fa-chevron-down export-chevron"></i>
+                            </button>
+                            <div class="export-menu" id="export-menu">
+                                <button id="export-md" class="export-option">
+                                    <i class="fas fa-file-lines"></i> Markdown (.md)
+                                </button>
+                                <button id="export-txt" class="export-option">
+                                    <i class="fas fa-file-alt"></i> Plain Text (.txt)
+                                </button>
+                                <button id="export-json" class="export-option">
+                                    <i class="fas fa-file-code"></i> JSON (.json)
+                                </button>
+                                <button id="export-html" class="export-option">
+                                    <i class="fas fa-file-export"></i> Standalone HTML (.html)
+                                </button>
+                            </div>
+                        </div>
+                    </header>
+                    <div class="analysis-result-container">
+                        <div id="analysis-output" class="markdown-body">
+                            <p class="placeholder-text">Waiting for AI synthesis...</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <p>&copy; 2026 SECURITY AUDITOR | Strategic Security Research Lab</p>
+        </footer>
+    </div>
+
+
+    <script src="script.js"></script>
+</body>
+</html>
