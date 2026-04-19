@@ -4,7 +4,6 @@ node_modules/
 *.log
 config.json
 temp/
-media/
 results/
 .parallax/
 .gemini/
