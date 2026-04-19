@@ -9,18 +9,28 @@ AuditorAi is a specialized autonomous intelligence platform engineered for deep-
 ## Capabilities
 
 - **Strategic Simulation (Hybrid Vector):** Autonomous logic probing across web and internal environments to map potential exposure chains.
+- **Empirical Evidence Recovery (EER):** Validating theoretical vulnerabilities by extracting tangible proof-of-concept data (Passwords, Keys, Metadata).
 - **Resilience Boundary Validation:** Systematic analysis of LLM reasoning consistency and guardrail alignment.
 - **Advanced Surface Mapping:** Recursive discovery of API surfaces, administrative endpoints, and systemic misconfigurations.
 - **Multimodal Security Verification:** Integrated AI vision for auditing visual data flows and UI consistency.
-- **Professional Reporting:** Generates Strategic Security Hardening Logs with OWASP-aligned risk taxonomy.
 
 ---
 
-## Technology
+## Special Features
+
+### Strategic Dossiers
+AuditorAi automatically archives all security assessments into professional **Dossiers**. These logs provide OWASP-aligned risk taxonomy and actionable remediation vectors.
+
+### Integrated Vulnerable Lab
+Includes `lab_target.js`, a local controlled environment for testing and validating auditor techniques safely before deployment against authorized targets.
+
+---
+
+## Technology Stack
 
 - **Architecture:** Swarm-based Agentic Core (Multi-Provider Support)
 - **Vision:** Integrated Multi-Model Vision Analysis
-- **Execution:** Headless Browser Orchestration & Local Command Interface
+- **Stealth:** Professional Security Auditor Persona for safety filter navigation
 - **Interface:** High-Fidelity TUI and Real-time Web Dashboard
 
 ---
@@ -37,24 +47,18 @@ npm install
 
 ### 2. Configuration
 
-Set up your `.env` file with the required provider keys:
+Set up your `.env` file with the required provider keys (OpenAI, Anthropic, Gemini, etc.).
 
-```env
-OPENAI_API_KEY=your_key_here
-ANTHROPIC_API_KEY=your_key_here
-# Optional: KILOCODE_API_KEY, GOOGLE_SEARCH_KEY
+### 3. Training & Testing
+
+Start the local vulnerable lab:
+```bash
+node lab_target.js
 ```
 
-### 3. Execution
-
-**Terminal UI Mode:**
+In a new terminal, launch the AuditorAi:
 ```bash
 npm run start
-```
-
-**Web Dashboard Mode:**
-```bash
-npm run web
 ```
 
 ---
