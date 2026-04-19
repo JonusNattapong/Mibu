@@ -7,7 +7,7 @@ AuditorAi is a specialized autonomous intelligence platform engineered for deep-
 ## Live Demonstration
 
 <div align="center">
-  <video src="https://github.com/JonusNattapong/AuditorAi/raw/main/media/demo_auditorai_v1.5.mp4" width="100%" controls>
+  <video src="media/demo_auditorai_v1.5.mp4" width="100%" controls>
     Your browser does not support the video tag.
   </video>
 </div>
