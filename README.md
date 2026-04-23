@@ -1,119 +1,131 @@
-# REDLOCK AuditorAi v3.0.0
+# REDLOCK AuditorAi v3.5.0 🚀
 
 ## Autonomous Security Intelligence & Swarm Orchestration Platform
 
-REDLOCK AuditorAi is a professional-grade autonomous intelligence platform designed for advanced security research, red teaming, and systematic vulnerability discovery. The system leverages a decentralized swarm architecture, enabling AI agents to conduct independent reconnaissance, analysis, and strategic reporting with full operational autonomy.
+REDLOCK AuditorAi เป็นแพลตฟอร์มความมั่นคงปลอดภัยไซเบอร์แบบอัตโนมัติ (Autonomous Intelligence Platform) ที่ออกแบบมาเพื่อการทำ Advanced Red Teaming, Vulnerability Research และ Systematic Auditing โดยใช้สถาปัตยกรรม **Decentralized Swarm** ที่สามารถตัดสินใจและปฏิบัติการได้เองอย่างเต็มรูปแบบ
 
-> **TACTICAL ADVISORY**
-> This platform is engineered for elite security research and authorized auditing.
-> Full agent autonomy is enabled. Operate with extreme precision.
-
----
-
-## ✅ Latest 2026 Upgrade
-
-✅ **Complete Swarm Autonomy System implemented**
-✅ **Background Workers with Task Persistence**
-✅ **Parallel Execution Engine with p-limit**
-✅ **Strict Orchestration Protocol (Zero Ambiguity)**
-✅ **Full TUI Command System / Slash Commands**
-✅ **Cron Scheduler & Remote Session Teleport**
-✅ **Watchdog Monitoring & Process Recovery**
-✅ **Zero Summary Laziness Guarantee**
-✅ **MITM Shadow Proxy with Active Request Mutation**
-✅ **AI-Powered Payload Forge Engine**
-✅ **HTTPS CONNECT Tunnel Support**
+> **[!] TACTICAL ADVISORY**
+> ระบบนี้ถูกวิศวกรรมมาเพื่อผู้เชี่ยวชาญด้านความมั่นคงปลอดภัยและการตรวจสอบที่ได้รับอนุญาตเท่านั้น 
+> การตัดสินใจของ Agent เป็นแบบ Full Autonomy โปรดใช้งานด้วยความระมัดระวังขั้นสูงสุด
 
 ---
 
-## Core Capabilities
+## 🏗️ System Architecture
 
-- **JSON-Driven Intelligence**: Completely decoupled architecture. AI providers, model metadata, tactical tools, and stealth profiles are managed through a centralized, data-centric JSON infrastructure.
-- **Predictive Fuzzing Engine**: Stack-aware path detection that fingerprints target technologies and predicts hidden endpoints based on deep developer habit analysis.
-- **Tactical Stealth Engine**: Advanced anti-detection layer with identity rotation, randomized User-Agent profiling, and tactical header injection. Supports multi-proxy orchestration for WAF evasion.
-- **Cyber-Noir Intelligence Dossiers**: Automated generation of premium, board-ready security assessments featuring Risk Heatmaps, OWASP mapping, and technical evidence.
-- **Autonomous Swarm Controller**: Multi-provider orchestration allowing for cross-validation and parallel execution across OpenAI, Anthropic, Gemini, and Local models (Ollama/LM Studio).
-- **Vision-Assisted Recon**: High-fidelity visual UI analysis to detect logic flaws and sensitive data exposure invisible to traditional crawlers.
-- **Unrestricted System Agent**: Full shell execution, filesystem management, and persistent memory across missions.
-- **Human-Mimetic Automation**: Playwright-powered browser automation with bezier-curve mouse movement and natural interaction patterns to bypass modern bot detection.
+ระบบถูกออกแบบมาให้มีการแยกส่วน (Decoupled) ระหว่างส่วนติดต่อผู้ใช้ (TUI), ส่วนควบคุมนโยบาย (Config Manager) และส่วนปฏิบัติการ (Swarm Engine)
 
----
+```mermaid
+graph TD
+    subgraph "Command & Control (C2)"
+        TUI["Terminal UI Dashboard<br/>(cli/index.tsx)"]
+        CM["Config Manager<br/>(src/config/configManager.ts)"]
+    end
 
-## Agent Arsenal (Swarm Tools)
+    subgraph "Intelligence Engine"
+        SC["Swarm Commander<br/>(server/agent.ts)"]
+        WE["Worker Engine<br/>(engine/worker.ts)"]
+        PM["Prompt Manager<br/>(engine/promptManager.ts)"]
+    end
 
-| Tool | Capability |
-|---|---|
-| `run_command` | Native shell execution (PowerShell/Bash) with zero restrictions. |
-| `fetch_url` | Stealth resource retrieval and content extraction. |
-| `crawl_url` | Deep semantic web crawling via Crawl4AI. |
-| `browser_action` | Interactive browser control (Navigate, Click, Type, Capture). |
-| `security_recon` | DNS, Port, Header, SSL, Wayback, and Secret scanning suite. |
-| `craft_exploit` | AI-assisted payload engineering and obfuscation. |
-| `vision_analysis` | Visual UI auditing and OCR-based intelligence gathering. |
-| `memory_read_write` | Persistent state synchronization across the agent swarm. |
-| `obsidian_sync` | Intelligence vaulting and report synchronization with Obsidian. |
+    subgraph "Operational Arsenal"
+        AT["Advanced Tools<br/>(tools/advancedTools.ts)"]
+        ST["Stealth Proxy<br/>(shadowProxy.ts)"]
+        V["Vision Engine<br/>(Browser/OCR)"]
+    end
 
----
-
-## Intelligence Vaulting & Reporting
-
-AuditorAi features native integration with **Obsidian**, allowing the swarm to build a persistent, interconnected security knowledge base (Vault) in real-time.
-
-- **Automated Dossiers**: Strategic reports are formatted in clean Markdown, ready for Obsidian's graph view.
-- **Evidence Vaulting**: All tool outputs, screenshots, and findings are automatically categorized and cross-linked.
-- **Braintrust Sync**: Synchronize mission intelligence across your personal knowledge base for long-term vulnerability tracking.
+    TUI --> CM
+    TUI --> SC
+    SC --> WE
+    WE --> PM
+    WE --> AT
+    WE --> V
+    AT --> ST
+    CM --> PM
+```
 
 ---
 
-## Technical Architecture
+## 🔄 Operational Workflow
 
-- **Runtime**: [Bun](https://bun.sh) (High-performance TS/JS runtime)
-- **API Engine**: [ElysiaJS](https://elysiajs.com) (End-to-end type-safe web framework)
-- **Intelligence Orchestration**: Data-driven Swarm Controller
-- **Stealth Automation**: Playwright with custom anti-detection protocols
-- **Reporting**: Strategic PDF generation engine
-- **Configuration**: Unified JSON System (`src/config/providers.json`, `server/tools.json`)
+กระบวนการทำงานของ AuditorAi จากการเริ่มภารกิจจนถึงการส่งมอบรายงานเชิงยุทธวิธี
+
+```mermaid
+sequenceDiagram
+    participant U as Operator
+    participant T as TUI Dashboard
+    participant C as Config Manager
+    participant S as Swarm Commander
+    participant A as Tool Arsenal
+
+    U->>T: Select/Activate Profile
+    T->>C: Switch Credentials & Model
+    U->>T: Define Target & Mission Goal
+    T->>S: Initialize Mission (Gitifying Animation)
+    
+    loop Autonomous Execution
+        S->>S: Reason next step (PromptManager)
+        S->>A: Execute Tool (run_command, fetch_url, etc.)
+        A-->>S: Raw Data / Evidence
+        S->>S: Analyze & Adapt Strategy
+    end
+
+    S-->>T: Final Tactical Report Synthesis
+    T-->>U: Mission Accomplished
+```
 
 ---
 
-## Installation & Deployment
+## ✨ Key Enhancements (2026 Edition)
 
-### 1. Initialization
+*   **Tactical Profile Management**: ระบบจัดการโปรไฟล์ที่ผ่านการ Hardening รองรับการแยก Save, Activate และ Delete พร้อมการแสดงสถานะ Active แบบ High-Visibility (Green/Bold)
+*   **Dynamic Mission Loading**: อินเทอร์เฟซแบบ "✛ Gitifying..." ที่ได้รับแรงบันดาลใจจาก Claude Code พร้อมชุดคำกริยาเชิงยุทธวิธีที่เปลี่ยนไปตามเฟรมเวลา
+*   **Swarm Autonomy**: Agent สามารถเลือกใช้เครื่องมือ (Tool Invocation) และวางแผนซ้ำได้ด้วยตัวเองจนกว่าภารกิจจะสำเร็จ
+*   **Integrated Security Lab**: ห้องทดลองช่องโหว่ 13 รูปแบบ (Port 8080) สำหรับการฝึกฝนและทดสอบ Payload
 
+---
+
+## 🛠️ สถาปัตยกรรมและเทคโนโลยี
+
+*   **Runtime**: [Bun](https://bun.sh) (100% Native TypeScript/JavaScript)
+*   **TUI Framework**: [Ink](https://github.com/vadimdemedes/ink) (React-based Terminal Interfaces)
+*   **Intelligence Provider**: รองรับ Multi-Model (Anthropic, OpenAI, Gemini, Local Models)
+*   **Network Layer**: Playwright (Anti-Detection), Shadow Proxy (MITM), Stealth Engine
+
+---
+
+## 🚀 การใช้งาน (Quick Start)
+
+### 1. ติดตั้ง Dependencies
 ```bash
 bun install
 ```
 
-### 2. Configuration
-
-AuditorAi uses a centralized configuration system. Edit `src/config/providers.json` to manage AI gateways and `src/config/stealth_config.json` for anti-detection parameters. Persistent profiles can be managed via `src/config/configManager.ts`.
-
-### 3. Execution Commands
-
-| Command | Mode |
-|---|---|
-| `bun start` | Main Mission Bootstrap |
-| `bun run tui` | Operational HUD (Terminal UI) |
-| `bun run web` | API & Tactical Dashboard |
-| `bun run check` | Full System Type Validation |
-| `bun run lab` | Integrated Training Lab |
-
----
-
-## Integrated Training Lab
-
-The platform includes a dedicated security lab featuring 13 real-world vulnerability scenarios for training and mission validation, covering everything from SQLi and XSS to Logic Flaws and JWT Forgery.
-
+### 2. เริ่มต้นระบบ Operational HUD
 ```bash
-bun lab/index.ts
+bun start
 ```
 
+### 3. การจัดการโปรไฟล์ (Environment Settings)
+*   ใช้ **Arrow Keys / Tab** ในการเลือกฟิลด์ (Name, Provider, API Key, Model)
+*   กดปุ่ม **[ SAVE ]** เพื่อบันทึกข้อมูล
+*   กดปุ่ม **[ ACTIVATE ]** เพื่อเริ่มใช้งานโปรไฟล์นั้นทันที (ชื่อจะกลายเป็นสีเขียว)
+*   กดปุ่ม **[ DELETE ]** เพื่อลบโปรไฟล์ที่ไม่ต้องการ
+
 ---
 
-## Compliance and Liability
+## 📊 รายการเครื่องมือ (Agent Arsenal)
 
-This platform is intended for authorized security auditing, educational research, and defensive system hardening only. Unauthorized malicious use is strictly prohibited. The authors bear no responsibility for any actions performed using this software.
+| เครื่องมือ | ความสามารถ |
+|---|---|
+| `run_command` | ปฏิบัติการผ่าน Shell (PowerShell/Bash) แบบไร้ข้อจำกัด |
+| `security_recon` | สแกนหาช่องโหว่, DNS, Port และความลับที่รั่วไหล |
+| `browser_action` | ควบคุม Browser อัตโนมัติ (Click, Type, Screen Capture) |
+| `craft_exploit` | สร้างและดัดแปลง Payload เพื่อข้ามผ่าน WAF/Detection |
+| `vision_analysis` | วิเคราะห์หน้าจอ UI เพื่อหา Logic Flaws ที่เครื่องมือสแกนปกติมองไม่เห็น |
 
 ---
+
+## 📜 Compliance and Liability
+ซอฟต์แวร์นี้ถูกสร้างขึ้นเพื่อการวิจัยและตรวจสอบความปลอดภัยในขอบเขตที่ได้รับอนุญาตเท่านั้น ผู้พัฒนาจะไม่รับผิดชอบต่อความเสียหายใดๆ ที่เกิดจากการนำไปใช้ในทางที่ผิดกฎหมาย
 
 **Operational Precision. Swarm Intelligence. Zero Summary Laziness. Full Autonomy.**

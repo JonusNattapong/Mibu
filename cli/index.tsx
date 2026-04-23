@@ -204,6 +204,27 @@ const App = () => {
 
   const WelcomeStep = () => {
     const [menuItems, setMenuItems] = useState<any[]>([]);
+    const [verbIndex, setVerbIndex] = useState(0);
+    const [iconIndex, setIconIndex] = useState(0);
+    const TACTICAL_VERBS = [
+      'Gitifying', 'Quantumizing', 'Clauding', 'Architecting', 'Bootstrapping', 
+      'Combobulating', 'Discombobulating', 'Hyperspacing', 'Ionizing', 'Metamorphosing'
+    ];
+    const TACTICAL_ICONS = ['✛', '✢', '✳', '✶', '✻', '✽'];
+
+    useEffect(() => {
+      const verbInterval = setInterval(() => {
+        setVerbIndex(prev => (prev + 1) % TACTICAL_VERBS.length);
+      }, 1500);
+      const iconInterval = setInterval(() => {
+        setIconIndex(prev => (prev + 1) % TACTICAL_ICONS.length);
+      }, 120);
+      return () => {
+        clearInterval(verbInterval);
+        clearInterval(iconInterval);
+      };
+    }, []);
+
     useEffect(() => {
       const fallbackMenu = [
         { label: 'START AUTONOMOUS REDTEAM', value: 'agent', color: THEME.primary },
@@ -253,8 +274,17 @@ const App = () => {
       <Box flexDirection="column" padding={1}>
         <Gradient colors={["#D97757", "#FCAB64", "#D97757"]}><Text bold>{logo}</Text></Gradient>
         <Box marginTop={1}><SelectInput items={menuItems} onSelect={handleSelect} /></Box>
+        
+        {isStartingMission && (
+          <Box marginTop={1}>
+            <Text color={THEME.accent}>
+              <Spinner type="dots" /> <Text bold>{TACTICAL_ICONS[iconIndex]}</Text> {TACTICAL_VERBS[verbIndex]}...
+            </Text>
+          </Box>
+        )}
+
         <Spacer />
-        <Box marginTop={1}><Text color={THEME.dim}>Active: {profileName} [{provider}]</Text></Box>
+        <Box marginTop={1}><Text color={THEME.dim}>Active Profile: </Text><Text color={THEME.accent} bold>{profileName} [{provider}:{model || 'auto'}]</Text></Box>
       </Box>
     );
   };
@@ -298,21 +328,37 @@ const App = () => {
   const ConfigStep = () => {
     const [subStep, setSubStep] = useState<'list' | 'edit'>('list');
     const [selectedProfile, setSelectedProfile] = useState<any>(null);
+    const [focusIndex, setFocusIndex] = useState(0); // 0-3:Fields, 4:Save, 5:Activate, 6:Delete
+
     const profiles = configManager.getProfiles();
-    const items = profiles.map(p => ({ label: p.id === configManager.getActiveProfile()?.id ? `◈ ${p.name}` : `  ${p.name}`, value: p.id }));
+    const activeProfile = configManager.getActiveProfile();
+    
+    const items = profiles.map(p => {
+      const isActive = p.id === activeProfile?.id;
+      return { 
+        label: isActive ? chalk.green(`◈ ${p.name.toUpperCase()} (ACTIVE)`) : `  ${p.name.toUpperCase()}`, 
+        value: p.id 
+      };
+    });
 
     const handleSelect = (item: any) => {
       const p = profiles.find(x => x.id === item.value);
-      if (p) { setSelectedProfile({ ...p }); setSubStep('edit'); }
+      if (p) { setSelectedProfile({ ...p }); setSubStep('edit'); setFocusIndex(0); }
     };
 
-    const save = () => { if (selectedProfile) { configManager.saveProfile(selectedProfile); configManager.setActiveProfile(selectedProfile.id); setStep('welcome'); } };
-    const remove = () => { if (selectedProfile) { configManager.removeProfile(selectedProfile.id); setSubStep('list'); } };
+    const doSave = () => { if (selectedProfile) { configManager.saveProfile(selectedProfile); addLog(`KEYS: Profile [${selectedProfile.name}] saved.`, 'success'); setStep('welcome'); } };
+    const doActivate = () => { if (selectedProfile) { configManager.setActiveProfile(selectedProfile.id); addLog(`TACTICAL: Profile [${selectedProfile.name}] activated.`, 'success'); setStep('welcome'); } };
+    const doDelete = () => { if (selectedProfile) { configManager.removeProfile(selectedProfile.id); setSubStep('list'); } };
 
     useInput((i, k) => {
       if (subStep === 'edit') {
-        if (k.return) save();
-        if (i === 'd') remove();
+        if (k.return) {
+          if (focusIndex === 4) doSave();
+          if (focusIndex === 5) doActivate();
+          if (focusIndex === 6) doDelete();
+        }
+        if (k.tab || k.downArrow) setFocusIndex(f => (f + 1) % 7);
+        if (k.upArrow) setFocusIndex(f => (f - 1 + 7) % 7);
       }
     });
 
@@ -320,13 +366,26 @@ const App = () => {
       return (
         <Box flexDirection="column" padding={1}>
           <Text bold color={THEME.primary}>EDIT PROFILE: {selectedProfile.name}</Text>
-          <Box flexDirection="column" marginTop={1}>
-            <Box><Text>Name    : </Text><TextInput value={selectedProfile.name} onChange={v => setSelectedProfile({...selectedProfile, name: v})} /></Box>
-            <Box><Text>Provider: </Text><TextInput value={selectedProfile.provider} onChange={v => setSelectedProfile({...selectedProfile, provider: v})} /></Box>
-            <Box><Text>API Key : </Text><TextInput value={selectedProfile.apiKey || ''} onChange={v => setSelectedProfile({...selectedProfile, apiKey: v})} mask="*" /></Box>
-            <Box><Text>Model   : </Text><TextInput value={selectedProfile.model || ''} onChange={v => setSelectedProfile({...selectedProfile, model: v})} /></Box>
+          <Box flexDirection="column" marginTop={1} marginBottom={1}>
+            <Box><Text color={focusIndex === 0 ? THEME.accent : 'white'}>Name    : </Text><TextInput focus={focusIndex === 0} value={selectedProfile.name} onChange={v => setSelectedProfile({...selectedProfile, name: v})} /></Box>
+            <Box><Text color={focusIndex === 1 ? THEME.accent : 'white'}>Provider: </Text><TextInput focus={focusIndex === 1} value={selectedProfile.provider} onChange={v => setSelectedProfile({...selectedProfile, provider: v})} /></Box>
+            <Box><Text color={focusIndex === 2 ? THEME.accent : 'white'}>API Key : </Text><TextInput focus={focusIndex === 2} value={selectedProfile.apiKey || ''} onChange={v => setSelectedProfile({...selectedProfile, apiKey: v})} mask="*" /></Box>
+            <Box><Text color={focusIndex === 3 ? THEME.accent : 'white'}>Model   : </Text><TextInput focus={focusIndex === 3} value={selectedProfile.model || ''} onChange={v => setSelectedProfile({...selectedProfile, model: v})} /></Box>
           </Box>
-          <Box marginTop={1}><Text color={THEME.accent}>[Enter to Save | D to Delete | Esc to Back]</Text></Box>
+          
+          <Box flexDirection="row">
+            <Box borderStyle="round" borderColor={focusIndex === 4 ? THEME.accent : THEME.dim} paddingX={1} marginRight={1}>
+              <Text bold={focusIndex === 4} color={focusIndex === 4 ? THEME.accent : 'white'}> SAVE </Text>
+            </Box>
+            <Box borderStyle="round" borderColor={focusIndex === 5 ? THEME.accent : THEME.dim} paddingX={1} marginRight={1}>
+              <Text bold={focusIndex === 5} color={focusIndex === 5 ? THEME.accent : 'white'}> ACTIVATE </Text>
+            </Box>
+            <Box borderStyle="round" borderColor={focusIndex === 6 ? THEME.error : THEME.dim} paddingX={1}>
+              <Text bold={focusIndex === 6} color={focusIndex === 6 ? THEME.error : 'white'}> DELETE </Text>
+            </Box>
+          </Box>
+          
+          <Box marginTop={1}><Text color={THEME.dim}>[Arrows to Move | Enter to Execute | Esc to Back]</Text></Box>
         </Box>
       );
     }
@@ -335,7 +394,7 @@ const App = () => {
       <Box flexDirection="column" padding={1}>
         <Text bold color={THEME.primary}>PROFILE MANAGEMENT</Text>
         <Box marginTop={1}><SelectInput items={items} onSelect={handleSelect} /></Box>
-        <Box marginTop={1}><Text color={THEME.accent}>[Select Profile to Edit/Activate | Esc to Back]</Text></Box>
+        <Box marginTop={1}><Text color={THEME.dim}>[Select Profile to Edit/Activate | Esc to Back]</Text></Box>
       </Box>
     );
   };
