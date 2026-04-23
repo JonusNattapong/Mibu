@@ -241,9 +241,17 @@ const App = () => {
       else if (item.value === 'exit') { exit(); }
     };
 
+    const logo = `
+▄▄▄▄▄▄▄    ▄▄▄▄▄▄▄ ▄▄▄▄▄▄   ▄▄▄        ▄▄▄▄▄    ▄▄▄▄▄▄▄ ▄▄▄   ▄▄▄ 
+███▀▀███▄ ███▀▀▀▀▀ ███▀▀██▄ ███      ▄███████▄ ███▀▀▀▀▀ ███ ▄███▀ 
+███▄▄███▀ ███▄▄    ███  ███ ███      ███   ███ ███      ███████   
+███▀▀██▄  ███      ███  ███ ███      ███▄▄▄███ ███      ███▀███▄  
+███  ▀███ ▀███████ ██████▀  ████████  ▀█████▀  ▀███████ ███  ▀███  
+    `;
+
     return (
       <Box flexDirection="column" padding={1}>
-        <Gradient colors={["#D97757", "#FCAB64", "#D97757"]}><Text bold> REDLOCK AUDITORAI </Text></Gradient>
+        <Gradient colors={["#D97757", "#FCAB64", "#D97757"]}><Text bold>{logo}</Text></Gradient>
         <Box marginTop={1}><SelectInput items={menuItems} onSelect={handleSelect} /></Box>
         <Spacer />
         <Box marginTop={1}><Text color={THEME.dim}>Active: {profileName} [{provider}]</Text></Box>
@@ -309,6 +317,19 @@ const App = () => {
     });
 
     if (subStep === 'edit' && selectedProfile) {
+      return (
+        <Box flexDirection="column" padding={1}>
+          <Text bold color={THEME.primary}>EDIT PROFILE: {selectedProfile.name}</Text>
+          <Box flexDirection="column" marginTop={1}>
+            <Box><Text>Name    : </Text><TextInput value={selectedProfile.name} onChange={v => setSelectedProfile({...selectedProfile, name: v})} /></Box>
+            <Box><Text>Provider: </Text><TextInput value={selectedProfile.provider} onChange={v => setSelectedProfile({...selectedProfile, provider: v})} /></Box>
+            <Box><Text>API Key : </Text><TextInput value={selectedProfile.apiKey || ''} onChange={v => setSelectedProfile({...selectedProfile, apiKey: v})} mask="*" /></Box>
+            <Box><Text>Model   : </Text><TextInput value={selectedProfile.model || ''} onChange={v => setSelectedProfile({...selectedProfile, model: v})} /></Box>
+          </Box>
+          <Box marginTop={1}><Text color={THEME.accent}>[Enter to Save | D to Delete | Esc to Back]</Text></Box>
+        </Box>
+      );
+    }
 
     return (
       <Box flexDirection="column" padding={1}>
