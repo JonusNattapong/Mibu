@@ -7,18 +7,21 @@
     "model": "gpt-5.4-mini",
     "timeout": 60000,
     "retryLimit": 2,
-    "_docs": "https://platform.openai.com/docs/models",
+    "supportsStreaming": true,
+    "_docs": "https://developers.openai.com/api/docs/models",
     "_note": "gpt-5.4 = flagship, gpt-5.4-mini = cost-efficient, gpt-5.4-nano = cheapest"
   },
   "anthropic": {
     "label": "Anthropic",
     "env_key": "ANTHROPIC_API_KEY",
     "baseUrl": "https://api.anthropic.com",
+    "modelsUrl": "https://api.anthropic.com/v1/models",
     "model": "claude-sonnet-4-6",
     "timeout": 90000,
     "retryLimit": 2,
+    "supportsStreaming": true,
     "_docs": "https://platform.claude.com/docs/en/about-claude/models/overview",
-    "_note": "claude-opus-4-7 = most capable, claude-sonnet-4-6 = balanced speed/intel, claude-haiku-4-5-20251001 = fastest"
+    "_note": "Native Anthropic endpoint is POST /v1/messages; requires x-api-key and anthropic-version headers"
   },
   "gemini": {
     "label": "Google Gemini",
@@ -28,8 +31,9 @@
     "model": "gemini-2.5-flash",
     "timeout": 60000,
     "retryLimit": 2,
-    "_docs": "https://ai.google.dev/gemini-api/docs/models",
-    "_note": "gemini-2.5-flash = best price-performance; gemini-2.0-flash จะ shutdown June 2026"
+    "supportsStreaming": true,
+    "_docs": "https://ai.google.dev/gemini-api/docs/openai",
+    "_note": "OpenAI-compatible endpoint supports /chat/completions with Authorization: Bearer GEMINI_API_KEY"
   },
   "openrouter": {
     "label": "OpenRouter",
@@ -39,19 +43,21 @@
     "model": "openai/gpt-5.4-mini",
     "timeout": 120000,
     "retryLimit": 2,
+    "supportsStreaming": true,
     "_docs": "https://openrouter.ai/docs/models",
-    "_note": "OpenRouter routing OpenAI models, ใช้ model string แบบ provider/model-name"
+    "_note": "OpenRouter uses provider/model-name model IDs, e.g. openai/gpt-5.4-mini or anthropic/claude-sonnet-4.6"
   },
   "opencode": {
-    "label": "OpenCode",
+    "label": "OpenCode Zen",
     "env_key": "OPENCODE_API_KEY",
-    "baseUrl": "https://api.opencode.ai/v1",
-    "modelsUrl": "https://api.opencode.ai/v1/models",
-    "model": "openai/gpt-5.4-mini",
+    "baseUrl": "https://opencode.ai/zen/v1",
+    "modelsUrl": "https://opencode.ai/zen/v1/models",
+    "model": "qwen3.6-plus",
     "timeout": 120000,
     "retryLimit": 2,
-    "_docs": "https://opencode.ai/docs",
-    "_note": "ตรวจสอบ model IDs ที่รองรับกับ /v1/models endpoint โดยตรง"
+    "supportsStreaming": true,
+    "_docs": "https://opencode.ai/docs/zen",
+    "_note": "For OpenAI-compatible /chat/completions use models like qwen3.6-plus, qwen3.5-plus, minimax-m2.7, glm-5.1, kimi-k2.6, big-pickle. GPT models on Zen use /responses, Claude models use /messages."
   },
   "groq": {
     "label": "Groq",
@@ -61,8 +67,9 @@
     "model": "llama-3.3-70b-versatile",
     "timeout": 60000,
     "retryLimit": 2,
+    "supportsStreaming": true,
     "_docs": "https://console.groq.com/docs/models",
-    "_note": "llama-3.1-8b-instant = เร็ว/ถูก, llama-3.3-70b-versatile = ฉลาดกว่า; llama4 ก็มีแล้ว"
+    "_note": "OpenAI-compatible endpoint; /chat/completions and /models are under /openai/v1"
   },
   "xai": {
     "label": "xAI",
@@ -72,8 +79,9 @@
     "model": "grok-4.20-non-reasoning",
     "timeout": 60000,
     "retryLimit": 2,
+    "supportsStreaming": true,
     "_docs": "https://docs.x.ai/developers/models",
-    "_note": "grok-4.20-reasoning = deep reasoning, grok-4.20-non-reasoning = fast/cheap; grok-2-latest ถูก deprecate แล้ว"
+    "_note": "For latency-sensitive use grok-4.20-non-reasoning; for deeper reasoning use grok-4.20-reasoning"
   },
   "mistral": {
     "label": "Mistral",
@@ -83,31 +91,33 @@
     "model": "mistral-large-latest",
     "timeout": 60000,
     "retryLimit": 2,
-    "_docs": "https://docs.mistral.ai/getting-started/models",
-    "_note": "mistral-large-latest → mistral-large-2512 (Large 3); mistral-small-latest สำหรับงานเบา"
+    "supportsStreaming": true,
+    "_docs": "https://docs.mistral.ai/models/overview",
+    "_note": "mistral-large-latest currently points to the latest Large family; use mistral-large-2512 if you want to pin Large 3"
   },
   "kilocode": {
-    "label": "KiloCode",
-    "env_key": "KILOCODE_API_KEY",
+    "label": "Kilo Gateway",
+    "env_key": "KILO_API_KEY",
     "baseUrl": "https://api.kilo.ai/api/gateway",
     "modelsUrl": "https://api.kilo.ai/api/gateway/models",
     "model": "kilo-auto/free",
-    "supportsStreaming": true,
     "timeout": 180000,
     "retryLimit": 3,
-    "_docs": "https://kilocode.ai/docs",
-    "_note": "ตรวจสอบ model IDs ล่าสุดกับ /api/gateway/models โดยตรง"
+    "supportsStreaming": true,
+    "_docs": "https://kilo.ai/docs/gateway/api-reference",
+    "_note": "Use kilo-auto/free for free routing, kilo-auto/balanced for better default quality, or provider/model IDs like anthropic/claude-sonnet-4.6"
   },
   "cline": {
-    "label": "Cline",
+    "label": "Cline API",
     "env_key": "CLINE_API_KEY",
-    "baseUrl": "https://api.openai.com/v1",
-    "modelsUrl": "https://api.openai.com/v1/models",
-    "model": "gpt-5.4-mini",
-    "timeout": 60000,
+    "baseUrl": "https://api.cline.bot/api/v1",
+    "modelsUrl": "https://api.cline.bot/api/v1/models",
+    "model": "anthropic/claude-sonnet-4-6",
+    "timeout": 120000,
     "retryLimit": 2,
-    "_docs": "https://github.com/cline/cline",
-    "_note": "Cline ใช้ OpenAI-compatible API; สามารถเปลี่ยน baseUrl ไปหา provider อื่นได้"
+    "supportsStreaming": true,
+    "_docs": "https://docs.cline.bot/api/overview",
+    "_note": "Cline API is OpenAI-compatible Chat Completions; free model examples include minimax/minimax-m2.5"
   },
   "ollama": {
     "label": "Ollama",
@@ -118,7 +128,20 @@
     "is_local": true,
     "timeout": 300000,
     "retryLimit": 1,
-    "_docs": "https://ollama.com/library",
-    "_note": "llama3.1 ยังใช้ได้ แต่ llama3.3 (70B) ดีกว่า; หรือ llama3.2 (3B) สำหรับเครื่องสเปคต่ำ"
+    "supportsStreaming": true,
+    "_docs": "https://docs.ollama.com/api/openai-compatibility",
+    "_note": "Local OpenAI-compatible endpoint. API key is usually ignored; use any placeholder if client requires one."
+  },
+  "deepseek": {
+    "label": "DeepSeek",
+    "env_key": "DEEPSEEK_API_KEY",
+    "baseUrl": "https://api.deepseek.com/v1",
+    "modelsUrl": "https://api.deepseek.com/v1/models",
+    "model": "deepseek-chat",
+    "timeout": 60000,
+    "retryLimit": 2,
+    "supportsStreaming": true,
+    "_docs": "https://platform.deepseek.com/api-docs/",
+    "_note": "DeepSeek API uses deepseek-chat (V3) and deepseek-reasoner (R1) models."
   }
 }

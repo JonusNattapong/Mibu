@@ -291,10 +291,6 @@ async function fetchContentFallback(url: string): Promise<FallbackResponse> {
     signal: createTimeoutSignal(getNumericConfig("BROWSER_FETCH_TIMEOUT_MS", 20000)),
   });
 
-  if (!response.ok) {
-    throw new Error(`HTTP fallback failed with status ${response.status}`);
-  }
-
   return {
     html: await response.text(),
     statusCode: response.status,
@@ -374,7 +370,7 @@ export async function initBrowser() {
   const isHeadless = configManager.get("BROWSER_HEADLESS") !== "false";
   const proxyStr = stealthEngine.getProxyConfig();
   const proxy = proxyStr ? stealthEngine.parseProxy(proxyStr) : undefined;
-  const launchTimeout = getNumericConfig("BROWSER_LAUNCH_TIMEOUT_MS", 25000);
+  const launchTimeout = getNumericConfig("BROWSER_LAUNCH_TIMEOUT_MS", 60000);
   const retryCooldownMs = getNumericConfig("BROWSER_RETRY_COOLDOWN_MS", 120000);
   const executablePath = configManager.get("BROWSER_EXECUTABLE_PATH");
   const channel = configManager.get("BROWSER_CHANNEL");
@@ -406,16 +402,7 @@ export async function initBrowser() {
     browserInitError = null;
 
     // --- Pre-launch Cleanup for Windows ---
-    if (process.platform === "win32") {
-      try {
-        const { execSync } = await import("child_process");
-        execSync("taskkill /f /im chrome.exe /t", { stdio: "ignore" });
-        execSync("taskkill /f /im msedge.exe /t", { stdio: "ignore" });
-        logger.info("Pre-launch cleanup: Terminated orphaned browser processes.");
-      } catch (e) {
-        // Ignore error if no processes were found
-      }
-    }
+    // Removed aggressive taskkill to prevent closing user's personal browsers
 
     browserInstance = await chromium.launch({
       headless: requestedHeadless,
@@ -430,7 +417,6 @@ export async function initBrowser() {
         "--no-first-run",
         "--disable-extensions",
         "--disable-component-update",
-        "--remote-debugging-port=9222",
         "--disable-gpu",
         "--window-size=1920,1080",
       ],
@@ -587,7 +573,7 @@ export async function navigate(
   try {
     await pageInstance.goto(normalizedUrl, {
       waitUntil: finalWaitUntil,
-      timeout: getNumericConfig("BROWSER_NAV_TIMEOUT_MS", 30000),
+      timeout: getNumericConfig("BROWSER_NAV_TIMEOUT_MS", 60000),
     });
   } catch (error) {
     logger.warn(

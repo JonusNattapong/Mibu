@@ -1,5 +1,6 @@
 import fs from "fs/promises";
 import path from "path";
+import os from "os";
 
 export interface McpServerConfig {
   command: string;
@@ -7,7 +8,7 @@ export interface McpServerConfig {
   env?: Record<string, string>;
 }
 
-const configPath = path.join(process.cwd(), ".redlock", "mcp_servers.json");
+const configPath = path.join(os.homedir(), ".redrock", "mcp_servers.json");
 
 async function readConfig(): Promise<Record<string, McpServerConfig>> {
   try {

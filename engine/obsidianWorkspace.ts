@@ -56,6 +56,7 @@ export class ObsidianWorkspace {
     this.ensureDir("Evidence");
     this.ensureDir("Targets");
     this.ensureDir("Reports");
+    this.ensureDir("skills");
     
     this.generateObsidianConfig();
   }
@@ -84,11 +85,14 @@ export class ObsidianWorkspace {
     );
   }
 
-  public createNote(note: ObsidianNote): string {
+  public createNote(note: ObsidianNote, folder: string = ""): string {
+    const aliasesArr = Array.isArray(note.aliases) ? note.aliases : (typeof note.aliases === 'string' ? [note.aliases] : []);
+    const tagsArr = Array.isArray(note.tags) ? note.tags : (typeof note.tags === 'string' ? [note.tags] : []);
+
     const frontmatter = [
       "---",
-      `aliases: [${note.aliases?.map(a => `"${a}"`).join(", ") || ""}]`,
-      `tags: [${note.tags?.map(t => `"${t}"`).join(", ") || ""}]`,
+      `aliases: [${aliasesArr.map(a => `"${a}"`).join(", ")}]`,
+      `tags: [${tagsArr.map(t => `"${t}"`).join(", ")}]`,
       ...Object.entries(note.properties || {}).map(([k, v]) => `${k}: ${v}`),
       "---",
       "",
@@ -96,9 +100,19 @@ export class ObsidianWorkspace {
     ].join("\n");
 
     const filename = this.sanitizeFilename(note.title) + ".md";
-    const filePath = path.join(this.rootPath, filename);
+    const targetDir = path.join(this.rootPath, folder);
+    if (!fs.existsSync(targetDir)) {
+      fs.mkdirSync(targetDir, { recursive: true });
+    }
     
+    const filePath = path.join(targetDir, filename);
     fs.writeFileSync(filePath, frontmatter, "utf8");
+    
+    // Auto-update Mission Control if it's a target or report
+    if (folder === "Targets" || folder === "Reports") {
+      this.updateMissionControl();
+    }
+    
     return filePath;
   }
 
@@ -122,7 +136,7 @@ ${references.map(r => `- [[${r}]]`).join("\n")}
         severity,
         created: new Date().toISOString()
       }
-    });
+    }, "Findings");
   }
 
   public createTarget(targetUrl: string, findings: string[] = []): string {
@@ -145,7 +159,7 @@ ${findings.map(f => `- [[${f}]]`).join("\n")}
         url: targetUrl,
         scanned: new Date().toISOString()
       }
-    });
+    }, "Targets");
   }
 
   public createCanvas(canvas: Canvas): string {
@@ -155,7 +169,8 @@ ${findings.map(f => `- [[${f}]]`).join("\n")}
     };
 
     const filename = `Attack_Canvas_${Date.now()}.canvas`;
-    const filePath = path.join(this.rootPath, filename);
+    const targetDir = path.join(this.rootPath, "Evidence");
+    const filePath = path.join(targetDir, filename);
     
     fs.writeFileSync(filePath, JSON.stringify(canvasData, null, 2), "utf8");
     return filePath;
@@ -244,27 +259,68 @@ ${findings.map(f => `- [[${f}]]`).join("\n")}
   }
 
   /**
-   * Search for keywords within all notes
+   * Search for keywords within all tactical folders recursively
    */
-  public searchNotes(query: string): Array<{ title: string; preview: string }> {
-    const results: Array<{ title: string; preview: string }> = [];
-    const notes = this.listNotes();
+  public searchNotes(query: string): Array<{ title: string; folder: string; preview: string }> {
+    const results: Array<{ title: string; folder: string; preview: string }> = [];
+    const folders = ["", "skills", "Findings", "Reports", "Targets"];
     const lowerQuery = query.toLowerCase();
 
-    for (const title of notes) {
-      const content = this.readNote(title);
-      if (title.toLowerCase().includes(lowerQuery) || content.toLowerCase().includes(lowerQuery)) {
-        const index = content.toLowerCase().indexOf(lowerQuery);
-        const start = Math.max(0, index - 50);
-        const end = Math.min(content.length, index + 150);
-        results.push({
-          title,
-          preview: content.substring(start, end).replace(/\n/g, " ") + "..."
-        });
+    for (const folder of folders) {
+      const notes = this.listNotes(folder);
+      for (const title of notes) {
+        try {
+          const filename = this.sanitizeFilename(title) + ".md";
+          const filePath = path.join(this.rootPath, folder, filename);
+          const content = fs.readFileSync(filePath, "utf8");
+
+          if (title.toLowerCase().includes(lowerQuery) || content.toLowerCase().includes(lowerQuery)) {
+            const index = content.toLowerCase().indexOf(lowerQuery);
+            const start = Math.max(0, index - 50);
+            const end = Math.min(content.length, index + 150);
+            results.push({
+              title,
+              folder: folder || "Root",
+              preview: content.substring(start, end).replace(/\n/g, " ") + "..."
+            });
+          }
+        } catch (e) {
+          // Skip if file read fails
+          continue;
+        }
       }
     }
 
-    return results.slice(0, 20); // Limit to top 20 results
+    return results.slice(0, 30); // Limit to top 30 results
+  }
+
+  /**
+   * Generates or updates the central Dashboard for the workspace
+   */
+  private updateMissionControl() {
+    const targets = this.listNotes("Targets");
+    const reports = this.listNotes("Reports");
+    const findings = this.listNotes("Findings");
+
+    const content = `
+# 🛡️ Mibu Mission Control
+
+## 🎯 Active Targets
+${targets.length > 0 ? targets.map(t => `- [[Targets/${t}|${t}]]`).join("\n") : "No targets recorded yet."}
+
+## 📊 Tactical Reports
+${reports.length > 0 ? reports.map(r => `- [[Reports/${r}|${r}]]`).join("\n") : "No reports generated yet."}
+
+## 🔍 Critical Findings
+${findings.length > 0 ? findings.slice(0, 10).map(f => `- [[Findings/${f}|${f}]]`).join("\n") : "No findings recorded yet."}
+
+---
+*Last Updated: ${new Date().toLocaleString()}*
+`;
+
+    const filePath = path.join(this.rootPath, "Mission_Control.md");
+    const frontmatter = "---\ntags: [dashboard, core]\n---\n";
+    fs.writeFileSync(filePath, frontmatter + content, "utf8");
   }
 }
 

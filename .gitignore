@@ -62,3 +62,17 @@ lab/.progress.json
 scheduled_tasks.json
 .cron/
 scheduler.lock
+
+# Claude
+.claude/
+
+# Temporary & Scratch
+scratch/
+.redrock/
+
+# Test & Debug Files
+test_swarm_tools.ts
+cookies.txt
+session.txt
+final_session.txt
+response.txt

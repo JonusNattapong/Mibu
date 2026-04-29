@@ -123,9 +123,14 @@ export async function dnsRecon(domain: string): Promise<DNSReconResult> {
     { type: "SOA", fn: () => dns.resolveSoa(domain) },
   ];
 
+  const TIMEOUT_MS = 5000;
+
   for (const task of tasks) {
     try {
-      records[task.type] = await task.fn();
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("DNS Timeout")), TIMEOUT_MS)
+      );
+      records[task.type] = await Promise.race([task.fn(), timeoutPromise]);
     } catch {
       records[task.type] = [];
     }

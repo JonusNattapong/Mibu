@@ -1,8 +1,8 @@
 {
   "name": "redlock",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "type": "module",
-  "description": "RedLock — Autonomous Security Intelligence Platform",
+  "description": "REDLOCK — Autonomous Security Intelligence Platform v3",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/JonusNattapong/RedLock.git"
@@ -19,22 +19,21 @@
   "scripts": {
     "start": "bun index.ts",
     "server": "bun server/index.ts",
-    "tui": "bun cli/index.tsx",
     "dev": "bun index.ts --dev",
     "check": "bun x tsc --noEmit",
-    "lab": "bun lab/index.ts",
     "clean": "rm -rf node_modules package-lock.json && bun install"
   },
   "keywords": [
     "bun",
     "typescript",
     "redlock",
-    "redlock",
     "red-teaming",
     "security",
     "ai",
     "openai",
-    "gemini"
+    "gemini",
+    "swarm",
+    "autonomous"
   ],
   "license": "SEE LICENSE IN LICENSE",
   "author": "JonusNattapong",

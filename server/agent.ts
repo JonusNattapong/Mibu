@@ -1,5 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
+import * as os from "os";
+import { cacheManager } from "../engine/cacheManager";
 import { logger } from "../src/runtime/logger";
 import {
   createSwarmCoordinator,
@@ -22,6 +24,7 @@ import smartFuzzer from "../tools/smartFuzzer";
 import VisionBrowser from "../tools/visionBrowser";
 import ReverseEngineer from "../tools/reverseEngineer";
 import advancedTools from "../tools/advancedTools";
+import { cveSearcher } from "../tools/cveSearch";
 
 // Engine Integrations
 import { spawn, ChildProcess } from "node:child_process";
@@ -101,20 +104,20 @@ function truncateForDisplay(value: string, maxLength = 220): string {
   return `${normalized.slice(0, maxLength - 3)}...`;
 }
 
-function previewToolArguments(args: ToolArguments, maxLength = 180): string {
+function previewToolArguments(args: ToolArguments): string {
   const keys = Object.keys(args);
   if (keys.length === 0) return "{}";
 
   try {
-    return truncateForDisplay(JSON.stringify(args), maxLength);
+    return JSON.stringify(args);
   } catch {
     return `{${keys.join(", ")}}`;
   }
 }
 
-function summarizeToolResult(toolResult: unknown, maxLength = 240): string {
+function summarizeToolResult(toolResult: unknown): string {
   if (typeof toolResult === "string") {
-    return truncateForDisplay(toolResult, maxLength);
+    return toolResult;
   }
 
   if (Buffer.isBuffer(toolResult)) {
@@ -125,25 +128,25 @@ function summarizeToolResult(toolResult: unknown, maxLength = 240): string {
     const candidate = toolResult as Record<string, unknown>;
 
     if (typeof candidate.summary === "string" && candidate.summary.trim()) {
-      return truncateForDisplay(candidate.summary, maxLength);
+      return candidate.summary;
     }
 
     if (typeof candidate.message === "string" && candidate.message.trim()) {
-      return truncateForDisplay(candidate.message, maxLength);
+      return candidate.message;
     }
 
     if (typeof candidate.status === "string" && candidate.status.trim()) {
-      return truncateForDisplay(candidate.status, maxLength);
+      return candidate.status;
     }
 
     try {
-      return truncateForDisplay(JSON.stringify(toolResult), maxLength);
+      return JSON.stringify(toolResult);
     } catch {
       return "[structured result]";
     }
   }
 
-  return truncateForDisplay(String(toolResult), maxLength);
+  return String(toolResult);
 }
 
 function summarizeAssistantStep(
@@ -151,11 +154,12 @@ function summarizeAssistantStep(
   toolCalls: ParsedToolCall[],
 ): string {
   if (toolCalls.length > 0) {
-    const names = toolCalls.map((call) => call.name).join(", ");
-    return `Selected ${toolCalls.length} tool ${toolCalls.length === 1 ? "call" : "calls"}: ${names}`;
+    const uniqueNames = [...new Set(toolCalls.map((call) => call.name))];
+    const displayNames = uniqueNames.join(", ");
+    return `Selected ${toolCalls.length} tool calls: ${displayNames}`;
   }
 
-  return `Produced a direct analysis update: ${truncateForDisplay(responseText, 200)}`;
+  return `Analysis: ${responseText}`;
 }
 
 function asToolArguments(value: unknown): ToolArguments {
@@ -191,6 +195,14 @@ function normalizeHostArg(args: ToolArguments, fallback?: string): string {
   } catch {
     return url;
   }
+}
+
+function getFormattedTimestamp(): string {
+  const now = new Date();
+  const date = now.toISOString().split("T")[0];
+  const time = now.getHours().toString().padStart(2, "0") + "-" + 
+               now.getMinutes().toString().padStart(2, "0");
+  return `${date}_${time}`;
 }
 
 function resolveBrowserAction(
@@ -515,7 +527,7 @@ export class SwarmCommander {
     this.skillManager = createSkillManager(this.context);
 
     // Initialize Local Obsidian Vault
-    const vaultPath = path.join(process.cwd(), "dossiers");
+    const vaultPath = path.join(os.homedir(), ".redrock", "dossiers");
     this.obsidian = new ObsidianWorkspace(vaultPath);
 
     // Tool registry will be dynamically resolved with mission target
@@ -553,6 +565,7 @@ export class SwarmCommander {
     target: string,
     browserMissionState: BrowserMissionState,
     onLog: (msg: string) => void,
+    onDraftUpdate: (data: any) => void,
   ): Record<string, (args: ToolArguments) => Promise<unknown> | unknown> {
     return {
       dns_recon: (args) => reconTools.dnsRecon(normalizeHostArg(args, target)),
@@ -598,9 +611,25 @@ export class SwarmCommander {
       },
       http_request: async (args) => {
         const url = normalizeUrlArg(args, target);
-        if (!url || url.includes(" ")) return "Error: 'url' argument is invalid or missing.";
+        if (!url || url.includes(" ")) return "Error: 'url' argument is required or invalid.";
         const result = await humanBrowser.navigate(url);
         return typeof result === "string" ? this.htmlToMarkdown(result) : result;
+      },
+      bash: async (args) => {
+        const cmd = getStringArg(args, "command");
+        const id = getStringArg(args, "sessionId") || "main";
+        if (!cmd) return "Error: 'command' argument is required.";
+        
+        if (this.terminalSessions.has(id)) {
+          // reuse session but write command
+          const session = this.terminalSessions.get(id)!;
+          session.write(cmd);
+          return await session.readNew();
+        } else {
+          const session = new TerminalSession(cmd);
+          this.terminalSessions.set(id, session);
+          return await session.readNew();
+        }
       },
       swarm_coordinate: async (args) => {
         const objective = getStringArg(args, "objective");
@@ -654,14 +683,19 @@ export class SwarmCommander {
       deliver_final_report: (args) => {
         const content = getStringArg(args, "report_content");
         // Auto-save to Obsidian as well
+        const cleanTarget = target.replace(/https?:\/\//, "").replace(/[^a-zA-Z0-9]/g, "_").substring(0, 30);
         this.obsidian.createNote({
-          title: `Final_Report_${Date.now()}`,
+          title: `Report_${cleanTarget}_${getFormattedTimestamp()}`,
           content: content,
           tags: ["final-report", "swarm-mission"],
           aliases: [],
           links: [],
           properties: { status: "completed", timestamp: Date.now() },
-        });
+        }, "Reports");
+
+        // Force TUI to show this as the final intelligence report
+        onDraftUpdate({ type: 'final_report', content });
+
         return content;
       },
 
@@ -707,7 +741,15 @@ export class SwarmCommander {
           aliases: [],
           links: [],
           properties: { created: Date.now() },
-        });
+        }, "Findings");
+      },
+
+      emit_insight: (args) => {
+        const insight = getStringArg(args, "insight");
+        const source = getStringArg(args, "source_skill");
+        const msg = source ? `[Insight] Applying ${source}: ${insight}` : `[Insight] ${insight}`;
+        onLog(msg);
+        return "Insight recorded and displayed.";
       },
 
       generate_attack_canvas: (args) => {
@@ -775,7 +817,70 @@ export class SwarmCommander {
         if (!query) return "Error: 'query' is required.";
         return advancedTools.webSearch(query);
       },
+
+      search_web_free: async (args) => {
+        const query = getStringArg(args, "query");
+        if (!query) return "Error: 'query' is required.";
+        onLog(`[System] Engaging Free Reconnaissance via DuckDuckGo...`);
+        try {
+          // Using a simple duckduckgo html scraper/search approach via axios
+          const axios = (await import("axios")).default;
+          const url = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
+          const response = await axios.get(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+          const html = response.data;
+          // Simple regex-based extraction for lightweight free search
+          const results = html.match(/class="result__title">.*?href="(.*?)".*?>(.*?)<\/a>.*?class="result__snippet">(.*?)<\/a>/gs);
+          if (!results) return "No results found or rate limited by provider.";
+          
+          return `--- FREE SEARCH RESULTS: ${query} ---\n` + results.slice(0, 5).map((r: string) => {
+             const title = r.match(/class="result__title".*?>(.*?)<\/a>/s)?.[1].replace(/<.*?>/g, '') || "No Title";
+             const link = r.match(/href="(.*?)"/)?.[1] || "No Link";
+             const snippet = r.match(/class="result__snippet".*?>(.*?)<\/a>/s)?.[1].replace(/<.*?>/g, '') || "No Snippet";
+             return `[${title}]\nURL: ${link}\nSummary: ${snippet}\n`;
+          }).join("\n");
+        } catch (e: any) {
+          return `Free search failed: ${e.message}. Fallback to search_web if you have a key.`;
+        }
+      },
+
+      search_google_free: async (args) => {
+        const query = getStringArg(args, "query");
+        if (!query) return "Error: 'query' is required.";
+        onLog(`[System] Engaging Google Search Lite (No-Key Recon)...`);
+        try {
+          const axios = (await import("axios")).default;
+          // Using a proxy or direct search (lite version)
+          const url = `https://www.google.com/search?q=${encodeURIComponent(query)}&hl=en`;
+          const response = await axios.get(url, { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36' } });
+          const html = response.data;
+          
+          // Simple regex to extract search result snippets from Google HTML
+          const results = html.match(/<div class="BNeawe vv77ud s3v9rd AP7Wnd">.*?<\/div>/gs);
+          if (!results) return "Google search returned no results or was blocked by rate limits.";
+          
+          return `--- GOOGLE LITE RESULTS: ${query} ---\n` + results.slice(0, 5).map((r: string, i: number) => {
+             const snippet = r.replace(/<.*?>/g, '');
+             return `[Result ${i+1}]\nSummary: ${snippet}\n`;
+          }).join("\n");
+        } catch (e: any) {
+          return `Google Lite search failed: ${e.message}. Use search_web_free as fallback.`;
+        }
+      },
  
+      query_tactical_memory: (args) => {
+        const query = getStringArg(args, "query");
+        if (!query) return "Error: Search query is required.";
+        
+        const results = this.obsidian.searchNotes(query);
+        if (results.length === 0) return `No matches found for "${query}" in tactical memory.`;
+        
+        let response = `### Tactical Memory Search Results for "${query}":\n\n`;
+        results.forEach(res => {
+          response += `- **[[${res.folder}/${res.title}]]** (${res.folder}): ${res.preview}\n`;
+        });
+        return response;
+      },
+
       obsidian_create_note: (args) => {
         const title = getStringArg(args, "title");
         const content = getStringArg(args, "content");
@@ -788,7 +893,7 @@ export class SwarmCommander {
           aliases: [],
           links: [],
           properties: {}
-        });
+        }, "Findings");
         return `Note created: ${path}`;
       },
  
@@ -800,6 +905,27 @@ export class SwarmCommander {
         if (!title || !severity || !evidence) return "Error: 'title', 'severity', and 'evidence' are required.";
         const path = this.obsidian.createFinding(title, severity, evidence, references);
         return `Security finding recorded in Obsidian: ${path}`;
+      },
+ 
+      write_exploit_code: async (args) => {
+        const filename = getStringArg(args, "filename");
+        const content = getStringArg(args, "content");
+        if (!filename || !content) return "Error: 'filename' and 'content' are required.";
+        
+        try {
+          const fs = await import("fs");
+          const path = await import("path");
+          // Save in a 'payloads' directory inside the mission workspace
+          const payloadDir = path.join(process.cwd(), "payloads");
+          if (!fs.existsSync(payloadDir)) fs.mkdirSync(payloadDir);
+          
+          const fullPath = path.join(payloadDir, filename);
+          fs.writeFileSync(fullPath, content, "utf8");
+          onLog(`[System] Custom exploit code written to: ${filename}`);
+          return `Successfully created exploit script at: ${fullPath}. You can now run it using terminal_spawn. REMEMBER: Delete this file before finishing the mission.`;
+        } catch (e: any) {
+          return `Error writing exploit code: ${e.message}`;
+        }
       },
  
       obsidian_create_attack_canvas: (args) => {
@@ -853,13 +979,16 @@ ${typeof content === "string" ? content : JSON.stringify(content, null, 2)}
             properties: {
               source: url,
               type: "github_skill",
-              learned: Date.now()
+              learned: Date.now(),
+              validated: false // Requires manual review or further testing
             }
-          });
+          }, "skills");
 
           return `Successfully learned skill: ${skillName}. Stored in AI brain (Obsidian). You can now use search_skills to retrieve it.`;
         } catch (e: any) {
-          return `Failed to learn skill from GitHub: ${e.message}`;
+          const status = e.response?.status;
+          const msg = status === 404 ? "File not found (404). Check if the URL is correct and points to a RAW file." : e.message;
+          return `Failed to learn skill from GitHub: ${msg}`;
         }
       },
 
@@ -940,6 +1069,92 @@ ${typeof content === "string" ? content : JSON.stringify(content, null, 2)}
         return await session.readNew();
       },
 
+      switch_tactical_model: async (args) => {
+        const modelId = getStringArg(args, "modelId");
+        if (!modelId) return "Error: 'modelId' is required.";
+        
+        try {
+          const { switchTacticalModel } = await import("../src/config/configManager");
+          switchTacticalModel(modelId);
+          onLog(`[System] Swarm Intelligence model shifted to: ${modelId}`);
+          return `Successfully shifted tactical model to: ${modelId}. All subsequent turns will use this model.`;
+        } catch (e: any) {
+          return `Error switching tactical model: ${e.message}`;
+        }
+      },
+
+      list_tactical_models: async () => {
+        try {
+          const activeProfile = (await import("../src/config/configManager")).default.getActiveProfile();
+          if (!activeProfile) return "Error: No active profile found.";
+          
+          const providerId = activeProfile.provider;
+          const providers = (await import("../src/config/providers.json")).default as any;
+          const config = providers[providerId];
+          
+          if (!config) return `Error: Configuration for provider '${providerId}' not found.`;
+          
+          const note = config._note || "No specific notes for this provider.";
+          const defaultModel = config.model;
+          
+          // Enhanced free model detection
+          const modelsUrl = config.modelsUrl || "";
+          const isKilo = providerId === "kilocode";
+          const isOpenRouter = providerId === "openrouter";
+          
+          let freeInfo = "";
+          if (isKilo) freeInfo = "- NOTE: 'kilo-auto/free' is always FREE.\n";
+          if (isOpenRouter) freeInfo = "- TIP: Look for models with ':free' suffix for no-cost operations.\n";
+
+          return `--- AVAILABLE MODELS FOR ${activeProfile.name} (${providerId.toUpperCase()}) ---\n` +
+                 `Current Brain Model: ${activeProfile.model || defaultModel}\n` +
+                 `Current Vision Model: ${activeProfile.visionModel || "Not Set"}\n\n` +
+                 `Tactical Cost Guidance:\n` +
+                 `- [FREE] Models: Recommended for Reconnaissance, Scanning, and repetitive tasks.\n` +
+                 `- [PAID/PREMIUM] Models: Recommended for complex Exploitation logic and Final Dossier synthesis.\n` +
+                 `${freeInfo}\n` +
+                 `Provider Intelligence Notes:\n${note}\n\n` +
+                 `You can use switch_tactical_model to shift to any model ID supported by this provider's endpoint (${config.baseUrl}).`;
+        } catch (e: any) {
+          return `Error listing tactical models: ${e.message}`;
+        }
+      },
+
+      chain_vulnerabilities: async (args) => {
+        onLog(`[System] Chaining Intelligence: Analyzing vulnerability relationships...`);
+        const findings = this.obsidian.listNotes("Findings");
+        if (findings.length < 2) return "Not enough findings to create a chain. Keep exploring the target.";
+        
+        const context = findings.join("\n- ");
+        return `[TACTICAL CHAIN ANALYSIS]\nAvailable Findings:\n- ${context}\n\nTask: Analyze how these points can be chained. (e.g. Use XSS to steal cookies -> Use cookies to access Admin Panel -> Use Admin File Upload to get RCE).`;
+      },
+
+      mutate_payload: (args) => {
+        const payload = getStringArg(args, "payload");
+        const type = getStringArg(args, "type") || "all";
+        if (!payload) return "Error: 'payload' is required.";
+        
+        const b64 = Buffer.from(payload).toString('base64');
+        const hex = Buffer.from(payload).toString('hex');
+        const urlEnc = encodeURIComponent(payload);
+        const doubleUrlEnc = encodeURIComponent(urlEnc);
+        
+        return `--- PAYLOAD MUTATIONS for: ${payload} ---\n` +
+               `[BASE64] ${b64}\n` +
+               `[HEX] ${hex}\n` +
+               `[URL_ENCODE] ${urlEnc}\n` +
+               `[DOUBLE_URL] ${doubleUrlEnc}\n` +
+               `[TACTICAL] Consider using null-byte injection %00 or line-feed %0a for evasion.`;
+      },
+
+      research_and_learn_skill: async (args) => {
+        const topic = getStringArg(args, "topic");
+        if (!topic) return "Error: 'topic' is required (e.g. 'Advanced JWT Bypass techniques').";
+        
+        onLog(`[Research] Learning new skill on: ${topic}...`);
+        return `Initiating autonomous research for '${topic}'. \nStrategy: \n1. search_web_free for latest research papers/blogs. \n2. fetch_url to read technical details. \n3. summarize findings into a NEW SKILL note in Obsidian.`;
+      },
+
       terminal_interact: async (args) => {
         const id = getStringArg(args, "sessionId");
         const input = (args["input"] as string) || "";
@@ -959,7 +1174,36 @@ ${typeof content === "string" ? content : JSON.stringify(content, null, 2)}
         }
         return output;
       },
+
+      cve_search: (args) => {
+        const query = getStringArg(args, "query");
+        if (!query) return "Error: 'query' is required.";
+        return cveSearcher.searchByProduct(query);
+      },
     };
+  }
+
+  private loadAgenticHomeContext(): string {
+    const redrock = path.join(os.homedir(), ".redrock");
+    let context = "\n### 🏠 AGENTIC HOME CONTEXT\n";
+    
+    const dirs = ["memory", "rules", "agents", "dossiers/skills"];
+    dirs.forEach(dir => {
+      const p = path.join(redrock, dir);
+      if (fs.existsSync(p)) {
+        const files = fs.readdirSync(p).filter(f => f.endsWith(".md"));
+        if (files.length > 0) {
+          const category = dir.split('/').pop()?.toUpperCase() || dir.toUpperCase();
+          context += `\n#### [${category}]\n`;
+          files.forEach(file => {
+            const content = fs.readFileSync(path.join(p, file), "utf8").trim();
+            context += `##### ${file.replace(".md", "")}\n${content}\n`;
+          });
+        }
+      }
+    });
+
+    return context;
   }
 
   public async run(
@@ -977,22 +1221,27 @@ ${typeof content === "string" ? content : JSON.stringify(content, null, 2)}
     if (extraContext) onLog(`[System] Objective: ${extraContext}`);
 
     try {
+      onLog(`[System] Loading tactical provider utilities...`);
       const { inspectTarget, analyzeWithProvider } =
         await import("./providerUtils");
+      
+      onLog(`[System] Loading mission profile and techniques...`);
+      const activeProfile = configManager.getActiveProfile();
 
       // 1. Initial Recon
-      onLog(`[System] Performing reconnaissance on target infrastructure...`);
+      onLog(`[System] Probing target infrastructure: ${target}...`);
       const githubContext = await inspectTarget(target, browserVisible);
-      onLog(`[System] Reconnaissance complete. Tactical intelligence mapped.`);
+      onLog(`[System] Reconnaissance complete. Mapping tactical intelligence...`);
 
       await memoryManager.initialize();
       watchdog.start();
 
       // --- MCP Integration ---
+      onLog(`[System] Synchronizing with MCP Swarm nodes...`);
       const { McpManager } = await import("../src/runtime/mcp/manager");
       await McpManager.initialize();
       const mcpTools = await McpManager.listTools();
-      onLog(`[System] MCP Swarm initialized. ${mcpTools.length} external tools available.`);
+      onLog(`[System] MCP Swarm online. ${mcpTools.length} external capabilities detected.`);
 
       const dynamicTools = [...TOOLS_SCHEMA];
       for (const mt of mcpTools) {
@@ -1003,7 +1252,6 @@ ${typeof content === "string" ? content : JSON.stringify(content, null, 2)}
         });
       }
 
-      const activeProfile = configManager.getActiveProfile();
       const provider =
         activeProfile?.provider || process.env.DEFAULT_PROVIDER || "openai";
       const model =
@@ -1020,11 +1268,20 @@ ${tacticalHistory}
 - Available Techniques: ${techniques}
 - Active Mission Target: ${target}
 - Current Goal: ${extraContext || "Security Audit"}
+- COST AWARENESS: Priority for [FREE] models during initial Recon/Scan. Switch to [PAID/PREMIUM] for advanced exploitation or final dossier synthesis. Use list_tactical_models to see your tactical model library.
+- CLEANUP POLICY: You MUST delete all temporary files, exploit scripts, or payloads created during this mission before calling deliver_final_report. Use terminal commands (rm/del) to eliminate traces.
+- PHASE REPORTING: You MUST start your tactical thoughts with [PHASE: NAME] where NAME is one of: RECONNAISSANCE, VULNERABILITY SCAN, ACTIVE EXPLOITATION, DOSSIER SYNTHESIS.
+- TACTICAL MEMORY: Use query_tactical_memory at the start of each mission to recall past successful methods or learned skills related to the target or technology stack. Your memory resides in Obsidian.
       `.trim();
+
+      const agenticHomeContext = this.loadAgenticHomeContext();
+      onLog(`[System] Agentic HQ context loaded from ~/.redrock`);
+
+      const osInfo = `\n- OPERATING SYSTEM: ${process.platform === 'win32' ? 'Windows' : 'Linux/Unix'}\n- SHELL: ${process.platform === 'win32' ? 'cmd.exe / powershell (Use findstr instead of grep, type instead of cat, etc.)' : 'bash'}`;
 
       let agentPrompt = promptManager.getPrompt("agent")
         .replace(/{{target}}/g, target)
-        .replace(/{{context}}/g, contextInfo);
+        .replace(/{{context}}/g, `${contextInfo}\n${agenticHomeContext}\n${osInfo}`);
 
       let messages: any[] = [
         {
@@ -1045,7 +1302,12 @@ ${tacticalHistory}
         interactiveEnabled: true,
       };
 
+      onLog(`[System] Tactical prompt synthesized. Engaging Swarm Intelligence...`);
+
       while (turn <= MAX_TURNS && !missionComplete) {
+        // --- Collective Memory Sync: Reload dynamic context ---
+        const turnContext = this.loadAgenticHomeContext();
+
         onLog(
           `[System] Turn ${turn}: Swarm intelligence engaged...`,
         );
@@ -1060,8 +1322,7 @@ ${tacticalHistory}
         // Turn Retry Logic
         for (let attempt = 1; attempt <= 2; attempt++) {
           try {
-            // @ts-ignore - analyzeWithProvider signature updated in providerUtils.ts
-            result = await (analyzeWithProvider as any)(
+            result = await analyzeWithProvider(
               {
                 provider,
                 model,
@@ -1073,8 +1334,8 @@ ${tacticalHistory}
                 turnContent += chunk;
                 onChunk(chunk);
               },
-              (thought: string) => {
-                onThought?.(thought);
+              (usage: any) => {
+                // Silently handle usage tokens instead of passing to onThought
               },
             );
             if (result) {
@@ -1083,7 +1344,20 @@ ${tacticalHistory}
             }
           } catch (e: any) {
             turnError = e;
-            onLog(`[Warning] Turn ${turn} attempt ${attempt} failed: ${e.message}. Retrying...`);
+            onLog(`[Warning] Turn ${turn} attempt ${attempt} failed: ${e.message}.`);
+            
+            // Financial Auto-Recovery: If balance is low, switch to a free model for the next attempt
+            if (e.message.includes("[CRITICAL_BALANCE_ERROR]") && attempt === 1) {
+              onLog(`[System] Financial recovery engaged. Attempting auto-switch to a [FREE] model...`);
+              const { switchTacticalModel } = await import("../src/config/configManager");
+              const fallbackModel = provider === "kilocode" ? "kilo-auto/free" : (provider === "openrouter" ? "google/gemini-2.0-flash-exp:free" : null);
+              
+              if (fallbackModel) {
+                switchTacticalModel(fallbackModel);
+                onLog(`[System] Auto-switched to fallback model: ${fallbackModel}`);
+              }
+            }
+            
             await new Promise(r => setTimeout(r, 2000 * attempt));
           }
         }
@@ -1157,7 +1431,7 @@ Execute your next strategic action based on this goal. Ensure all tool parameter
         let toolExecutionOccurred = false;
 
         // --- Hybrid Tool Registry (Local + MCP) ---
-        const localRegistry = this.getToolRegistry(target, browserMissionState, onLog);
+        const localRegistry = this.getToolRegistry(target, browserMissionState, onLog, onDraftUpdate);
         const uniqueToolCalls = toolCalls.filter((call, index, self) => 
           index === self.findIndex((t) => 
             t.name === call.name && JSON.stringify(t.arguments) === JSON.stringify(call.arguments)
@@ -1172,6 +1446,16 @@ Execute your next strategic action based on this goal. Ensure all tool parameter
           const pLimit = (await import("p-limit")).default;
           const limit = pLimit(5);
 
+          const CACHEABLE_TOOLS: Record<string, number> = {
+            "cve_search": 86400000,       // 24h
+            "dns_recon": 43200000,        // 12h
+            "whois": 86400000,            // 24h
+            "wayback_lookup": 21600000,   // 6h
+            "search_web": 14400000,       // 4h
+            "ssl_inspect": 43200000,      // 12h
+            "fetch_url": 3600000,         // 1h
+          };
+
           const toolResults = await Promise.all(
             toolCallsToExecute.map((tc) =>
               limit(async () => {
@@ -1179,7 +1463,17 @@ Execute your next strategic action based on this goal. Ensure all tool parameter
                 const toolArgs = tc.arguments;
                 const toolId = tc.id;
 
-                onLog(`[Worker] Executing ${toolName}...`);
+
+                if (CACHEABLE_TOOLS[toolName]) {
+                  const cached = cacheManager.get(toolName, toolArgs);
+                  if (cached) {
+                    onLog(` ◈ Cache Hit: [${toolName}] using persistent intelligence...`);
+                    return { id: toolId, name: toolName, result: cached };
+                  }
+                }
+
+                onLog(` ◈ Swarm Operation [Turn ${turn}]`);
+                onLog(`  ↳ ${toolName}(${previewToolArguments(toolArgs)})`);
                 
                 try {
                   const toolFn = localRegistry[toolName];
@@ -1191,6 +1485,12 @@ Execute your next strategic action based on this goal. Ensure all tool parameter
                   // Fallback to MCP Swarm
                   const { McpManager: mcp } = await import("../src/runtime/mcp/manager");
                   const result = await mcp.callTool(toolName, toolArgs);
+                  
+                  // Store in Cache if applicable
+                  if (CACHEABLE_TOOLS[toolName]) {
+                    cacheManager.set(toolName, toolArgs, result, CACHEABLE_TOOLS[toolName]);
+                  }
+                  
                   return { id: toolId, name: toolName, result };
                 } catch (e: any) {
                   return { id: toolId, name: toolName, error: e.message };
@@ -1201,6 +1501,11 @@ Execute your next strategic action based on this goal. Ensure all tool parameter
 
           for (const res of toolResults) {
             const { id, name, result, error } = res;
+            
+            // Store successful results from local registry in cache
+            if (!error && result && CACHEABLE_TOOLS[name]) {
+              cacheManager.set(name, toolCallsToExecute.find(tc => tc.id === id)?.arguments, result, CACHEABLE_TOOLS[name]);
+            }
             
             if (error) {
               onLog(`[Error] Tool ${name} failed: ${truncateForDisplay(error, 180)}`);

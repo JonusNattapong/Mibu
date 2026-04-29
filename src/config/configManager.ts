@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import os from "os";
 
 export interface ProviderProfile {
   id: string;
@@ -8,6 +9,7 @@ export interface ProviderProfile {
   apiKey?: string;
   baseUrl?: string;
   model?: string;
+  visionModel?: string;
   defaultModel?: string;
   browserVisible?: boolean;
 }
@@ -18,7 +20,7 @@ interface RedlockConfig {
   profiles: ProviderProfile[];
 }
 
-const configDir = path.join(process.cwd(), ".redlock");
+const configDir = path.join(os.homedir(), ".redrock");
 const configPath = path.join(configDir, "config.json");
 
 function ensureConfigDir(): void {
@@ -75,7 +77,7 @@ export function getConfigDirPath(): string {
 }
 
 export function getDefaultWorkspace(): string {
-  return get("DEFAULT_WORKSPACE") || path.join(process.cwd(), "workspaces");
+  return get("DEFAULT_WORKSPACE") || path.join(configDir, "workspaces");
 }
 
 export function migrateFromDotEnv(envPath: string): void {
@@ -151,6 +153,13 @@ export function setActiveProfile(id: string): void {
   injectIntoProcessEnv();
 }
 
+export function switchTacticalModel(modelId: string): void {
+  const active = getActiveProfile();
+  if (active) {
+    updateProfile(active.id, { model: modelId });
+  }
+}
+
 export function updateProfile(
   id: string,
   patch: Partial<ProviderProfile>,
@@ -192,5 +201,6 @@ export default {
   saveProfile,
   setActiveProfile,
   updateProfile,
+  switchTacticalModel,
   removeProfile,
 };

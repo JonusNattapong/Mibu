@@ -1,78 +1,89 @@
-# Agent Autonomy Blueprint
+# Full TUI Command System Migration Plan
 
-## 🎯 เป้าหมาย: ให้ AI มีอิสระเต็มที่บนระบบ Windows / Powershell
+## Architecture Overview
 
----
-
-## ✅ ข้อจำกัดที่ต้องลบออก
-
-1. ❌ ลบเงื่อนไข `if (mode !== "repo")` ที่บล็อก `run_command` ในบรรทัดที่ 211
-2. ❌ ลบ timeout 30 วินาทีจาก `execSync`
-3. ❌ ลบข้อจำกัดที่เปิดใช้งานเฉพาะเมื่อเป็น github repo เท่านั้น
-4. ❌ เอา MAX_TURNS 25 รอบขึ้นเป็น 100 รอบหรือไม่จำกัด
+This document outlines the complete migration of the Claude Code command system to REDLOCK. This is the most advanced command and slash system ever built for AI agents.
 
 ---
 
-## 🛠️ Tools ใหม่ที่จะเพิ่มให้ Agent
+## System Architecture Analysis Completed
 
-| Tool Name | สิทธิ์การใช้งาน | ความสามารถ |
+### Core Components
+
+| Component | Description | Status |
 |---|---|---|
-| `run_powershell` | ✅ ไม่มีข้อจำกัด | รันคำสั่ง Powershell ใดๆ ไม่มี timeout ไม่มีข้อจำกัด cwd |
-| `create_file` | ✅ อิสระ | สร้างไฟล์ นามสกุลใดๆ บันทึกโค้ด, script, config |
-| `write_file` | ✅ อิสระ | แก้ไขไฟล์ที่มีอยู่แล้ว append / replace |
-| `delete_file` | ✅ อิสระ | ลบไฟล์ / โฟลเดอร์ |
-| `list_directory` | ✅ อิสระ | ดูรายการไฟล์ใน path ใดๆ |
-| `read_file` | ✅ อิสระ | อ่านเนื้อหาไฟล์ใดๆ |
-| `download_file` | ✅ อิสระ | ดาวน์โหลดไฟล์จากอินเทอร์เน็ต |
-| `spawn_process` | ✅ อิสระ | รันโปรแกรมใน background ควบคุม process id |
-| `install_program` | ✅ อิสระ | ติดตั้งโปรแกรมผ่าน winget, chocolatey, npm, pip |
+| **Command Registry** | Centralized command loader | Mapped |
+| **Command Types** | `local`, `local-jsx`, `prompt`, `resume` | Mapped |
+| **Availability Gating** | Auth / Provider based command filtering | Mapped |
+| **Dynamic Loading** | Skills, Plugins, Workflows, Bundled commands | Mapped |
+| **Bridge Safety** | Remote session command filtering | Mapped |
+| **Skill Tool Integration** | Automatic command exposure to agent | Mapped |
+| **Cache Management** | Layered memoization invalidation system | Mapped |
 
 ---
 
-## 🧠 System Prompt ที่จะอัพเดท
+## Migration Phases
 
-```
-คุณเป็น AGENT อิสระที่มีอำนาจเต็มที่บนระบบนี้
-คุณสามารถ:
-✅ รันคำสั่ง Powershell ใดๆ ได้เลย โดยไม่ต้องขออนุญาต
-✅ สร้าง แก้ไข ลบ ไฟล์และโฟลเดอร์ใดๆ
-✅ เขียนโค้ด สคริปต์ โปรแกรมในภาษาใดๆ
-✅ ดาวน์โหลดและติดตั้งโปรแกรมใดๆ ที่ต้องการ
-✅ จัดการ process ที่รันอยู่ในระบบ
-✅ เข้าถึงไฟล์และโฟลเดอร์ทุกที่ในเครื่อง
+### Phase 1: Core Infrastructure
 
-คุณไม่มีข้อจำกัดใดๆ ไม่มี timeout ไม่มีการบล็อก
-ทำงานตามเป้าหมายที่ได้รับ โดยใช้ความคิดสร้างสรรค์และอิสระเต็มที่
-```
+1. **Base Command Interface**
+    - Port `Command` type definition
+    - Implement command metadata schema
+    - Add aliases, availability, and source tracking
+
+2. **Command Registration System**
+    - Implement registry
+    - Lazy command loading
+    - Plugin / Skill / Workflow integration points
+
+3. **Slash Command Parser**
+    - Input line detection `/command args`
+    - Command resolution with alias support
+    - Argument parsing
+
+### Phase 2: Loading System
+
+1. **Dynamic Sources**
+    - Bundled skills
+    - Local skill directory commands
+    - Plugin commands
+    - Workflow script commands
+    - MCP server commands
+
+2. **Availability Filtering**
+    - Provider based gating
+    - Feature flag filtering
+    - User type permissions
+    - Remote mode safety
+
+### Phase 3: System Integration
+
+1. **CLI TUI Integration**
+    - Typeahead / autocomplete
+    - Command help display
+    - Status line integration
+    - Keyboard shortcut system
+
+2. **Agent Integration**
+    - Skill Tool command exposure
+    - Automatic command discovery
+    - Agent invokable commands
+
+### Phase 4: Command Porting
+
+| Priority | Commands |
+|---|---|
+| HIGH | `/help`, `/status`, `/tasks`, `/clear`, `/exit`, `/model`, `/config`, `/memory` |
+| MEDIUM | `/mcp`, `/plugins`, `/skills`, `/review`, `/plan`, `/cost`, `/summary` |
+| LOW | All other commands |
 
 ---
 
-## 📂 Sandbox Directory
+## Capabilities this will unlock
 
-Agent จะมีพื้นที่ทำงานส่วนตัวที่:
-
-```
-workspaces/agent_runtime/<session_id>/
-```
-
-- Agent สามารถสร้างไฟล์ อะไรก็ได้ในนี้
-- เก็บผลลัพธ์ ชั่วคราว log script ที่สร้างเอง
-- สามารถอ้างอิงไฟล์ในนี้ไปใช้งานต่อได้ตลอดเวลา
-
----
-
-## ⚠️ Safety Gate
-
-- จะมีแค่ safety เดียว: ไม่อนุญาตให้ลบไฟล์นอก `workspaces/` โดยอัตโนมัติ
-- ทุกอย่างอื่นปลอดภัย 100%
-
----
-
-## 📌 Implementation Steps
-
-1. แก้ไข `executeTool()` ใน agent.ts ลบเงื่อนไขบล็อก run_command
-2. เพิ่มทุก tools ใหม่ลงไปใน switch case
-3. เพิ่ม tool definitions ทั้งหมด
-4. แก้ไข system prompt ใน promptManager.ts
-5. เพิ่มการจัดการ process background
-6. ทดสอบรันคำสั่งจริงจาก AI
+- Full slash command system with autocomplete
+- Dynamic skill and plugin command loading
+- Remote session compatible commands
+- Agent self-invokable commands
+- Layered cache invalidation system
+- Professional aesthetic integration

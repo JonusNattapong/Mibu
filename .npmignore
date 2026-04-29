@@ -5,13 +5,14 @@
 .git/
 .vscode/
 
-# Assets & Documentation
+# Assets & Media
 assets/*.png
 assets/*.mp4
 output/
 screenshots/
+media/
 
-# Deep Analysis Workspaces (นายแง่ะอะไรไว้ ต้องไม่ให้ใครเห็น!)
+# Deep Analysis Workspaces
 workspaces/
 temp/
 tmp/
@@ -22,5 +23,5 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Node Modules (NPM จัดการเองอยู่แล้ว)
+# Node Modules (managed by package manager)
 node_modules/

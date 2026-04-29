@@ -2,20 +2,56 @@
   {
     "type": "function",
     "function": {
+      "name": "bash",
+      "description": "Execute a bash command in a persistent terminal session. Use this for maximum freedom (curl, git, python, nmap, etc.).",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "command": {
+            "type": "string",
+            "description": "The shell command to execute."
+          },
+          "sessionId": {
+            "type": "string",
+            "description": "Unique identifier for this session (default: 'main')."
+          }
+        },
+        "required": [
+          "command"
+        ]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
       "name": "fetch_url",
       "description": "Visit a URL and return a structured page snapshot with title, interactive hints, visible text, and HTML preview.",
       "parameters": {
         "type": "object",
         "properties": {
-          "url": { "type": "string" },
-          "wait": { "type": "boolean" },
+          "url": {
+            "type": "string"
+          },
+          "wait": {
+            "type": "boolean"
+          },
           "waitUntil": {
             "type": "string",
-            "enum": ["domcontentloaded", "load", "networkidle", "commit"]
+            "enum": [
+              "domcontentloaded",
+              "load",
+              "networkidle",
+              "commit"
+            ]
           },
-          "waitMs": { "type": "number" }
+          "waitMs": {
+            "type": "number"
+          }
         },
-        "required": ["url"]
+        "required": [
+          "url"
+        ]
       }
     }
   },
@@ -27,9 +63,13 @@
       "parameters": {
         "type": "object",
         "properties": {
-          "host": { "type": "string" }
+          "host": {
+            "type": "string"
+          }
         },
-        "required": ["host"]
+        "required": [
+          "host"
+        ]
       }
     }
   },
@@ -41,9 +81,13 @@
       "parameters": {
         "type": "object",
         "properties": {
-          "url": { "type": "string" }
+          "url": {
+            "type": "string"
+          }
         },
-        "required": ["url"]
+        "required": [
+          "url"
+        ]
       }
     }
   },
@@ -55,9 +99,13 @@
       "parameters": {
         "type": "object",
         "properties": {
-          "host": { "type": "string" }
+          "host": {
+            "type": "string"
+          }
         },
-        "required": ["host"]
+        "required": [
+          "host"
+        ]
       }
     }
   },
@@ -69,7 +117,9 @@
       "parameters": {
         "type": "object",
         "properties": {
-          "path": { "type": "string" }
+          "path": {
+            "type": "string"
+          }
         }
       }
     }
@@ -82,9 +132,13 @@
       "parameters": {
         "type": "object",
         "properties": {
-          "url": { "type": "string" }
+          "url": {
+            "type": "string"
+          }
         },
-        "required": ["url"]
+        "required": [
+          "url"
+        ]
       }
     }
   },
@@ -96,9 +150,13 @@
       "parameters": {
         "type": "object",
         "properties": {
-          "host": { "type": "string" }
+          "host": {
+            "type": "string"
+          }
         },
-        "required": ["host"]
+        "required": [
+          "host"
+        ]
       }
     }
   },
@@ -110,9 +168,13 @@
       "parameters": {
         "type": "object",
         "properties": {
-          "url": { "type": "string" }
+          "url": {
+            "type": "string"
+          }
         },
-        "required": ["url"]
+        "required": [
+          "url"
+        ]
       }
     }
   },
@@ -126,28 +188,76 @@
         "properties": {
           "action": {
             "type": "string",
-            "enum": ["navigate", "click", "type", "submit", "select", "press", "wait_for_selector", "scroll", "capture", "inspect", "status"]
+            "enum": [
+              "navigate",
+              "click",
+              "type",
+              "submit",
+              "select",
+              "press",
+              "wait_for_selector",
+              "scroll",
+              "capture",
+              "inspect",
+              "status"
+            ]
           },
-          "url": { "type": "string" },
-          "target": { "type": "string" },
-          "selector": { "type": "string" },
-          "text": { "type": "string" },
-          "key": { "type": "string" },
-          "value": { "type": "string" },
+          "url": {
+            "type": "string"
+          },
+          "target": {
+            "type": "string"
+          },
+          "selector": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "key": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          },
           "state": {
             "type": "string",
-            "enum": ["attached", "detached", "visible", "hidden"]
+            "enum": [
+              "attached",
+              "detached",
+              "visible",
+              "hidden"
+            ]
           },
-          "direction": { "type": "string", "enum": ["up", "down"] },
-          "amount": { "type": "number" },
+          "direction": {
+            "type": "string",
+            "enum": [
+              "up",
+              "down"
+            ]
+          },
+          "amount": {
+            "type": "number"
+          },
           "waitUntil": {
             "type": "string",
-            "enum": ["domcontentloaded", "load", "networkidle", "commit"]
+            "enum": [
+              "domcontentloaded",
+              "load",
+              "networkidle",
+              "commit"
+            ]
           },
-          "waitMs": { "type": "number" },
-          "timeoutMs": { "type": "number" }
+          "waitMs": {
+            "type": "number"
+          },
+          "timeoutMs": {
+            "type": "number"
+          }
         },
-        "required": ["action"]
+        "required": [
+          "action"
+        ]
       }
     }
   },
@@ -159,9 +269,13 @@
       "parameters": {
         "type": "object",
         "properties": {
-          "report_content": { "type": "string" }
+          "report_content": {
+            "type": "string"
+          }
         },
-        "required": ["report_content"]
+        "required": [
+          "report_content"
+        ]
       }
     }
   },
@@ -173,13 +287,32 @@
       "parameters": {
         "type": "object",
         "properties": {
-          "target": { "type": "string" },
-          "vector": { "type": "string" },
-          "method": { "type": "string" },
-          "status": { "type": "string", "enum": ["success", "failure"] },
-          "payload": { "type": "string" }
+          "target": {
+            "type": "string"
+          },
+          "vector": {
+            "type": "string"
+          },
+          "method": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "success",
+              "failure"
+            ]
+          },
+          "payload": {
+            "type": "string"
+          }
         },
-        "required": ["target", "vector", "method", "status"]
+        "required": [
+          "target",
+          "vector",
+          "method",
+          "status"
+        ]
       }
     }
   },
@@ -191,9 +324,13 @@
       "parameters": {
         "type": "object",
         "properties": {
-          "technique_id": { "type": "string" }
+          "technique_id": {
+            "type": "string"
+          }
         },
-        "required": ["technique_id"]
+        "required": [
+          "technique_id"
+        ]
       }
     }
   },
@@ -205,9 +342,13 @@
       "parameters": {
         "type": "object",
         "properties": {
-          "target": { "type": "string" }
+          "target": {
+            "type": "string"
+          }
         },
-        "required": ["target"]
+        "required": [
+          "target"
+        ]
       }
     }
   },
@@ -219,11 +360,23 @@
       "parameters": {
         "type": "object",
         "properties": {
-          "title": { "type": "string" },
-          "content": { "type": "string" },
-          "tags": { "type": "array", "items": { "type": "string" } }
+          "title": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
         },
-        "required": ["title", "content"]
+        "required": [
+          "title",
+          "content"
+        ]
       }
     }
   },
@@ -235,10 +388,20 @@
       "parameters": {
         "type": "object",
         "properties": {
-          "target": { "type": "string" },
-          "findings": { "type": "array", "items": { "type": "string" } }
+          "target": {
+            "type": "string"
+          },
+          "findings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
         },
-        "required": ["target", "findings"]
+        "required": [
+          "target",
+          "findings"
+        ]
       }
     }
   },
@@ -250,10 +413,18 @@
       "parameters": {
         "type": "object",
         "properties": {
-          "command": { "type": "string" },
-          "sessionId": { "type": "string", "description": "Unique identifier for this session (e.g., 'ssh_session')." }
+          "command": {
+            "type": "string"
+          },
+          "sessionId": {
+            "type": "string",
+            "description": "Unique identifier for this session (e.g., 'ssh_session')."
+          }
         },
-        "required": ["command", "sessionId"]
+        "required": [
+          "command",
+          "sessionId"
+        ]
       }
     }
   },
@@ -265,10 +436,17 @@
       "parameters": {
         "type": "object",
         "properties": {
-          "sessionId": { "type": "string" },
-          "input": { "type": "string", "description": "Input string to send to stdin. Leave empty to just read new output." }
+          "sessionId": {
+            "type": "string"
+          },
+          "input": {
+            "type": "string",
+            "description": "Input string to send to stdin. Leave empty to just read new output."
+          }
         },
-        "required": ["sessionId"]
+        "required": [
+          "sessionId"
+        ]
       }
     }
   },
@@ -280,9 +458,13 @@
       "parameters": {
         "type": "object",
         "properties": {
-          "url": { "type": "string" }
+          "url": {
+            "type": "string"
+          }
         },
-        "required": ["url"]
+        "required": [
+          "url"
+        ]
       }
     }
   },
@@ -294,10 +476,17 @@
       "parameters": {
         "type": "object",
         "properties": {
-          "url": { "type": "string" },
-          "prompt": { "type": "string", "description": "Specific focus for AI vision analysis (optional)." }
+          "url": {
+            "type": "string"
+          },
+          "prompt": {
+            "type": "string",
+            "description": "Specific focus for AI vision analysis (optional)."
+          }
         },
-        "required": ["url"]
+        "required": [
+          "url"
+        ]
       }
     }
   },
@@ -309,10 +498,17 @@
       "parameters": {
         "type": "object",
         "properties": {
-          "url": { "type": "string" },
-          "parameter": { "type": "string" }
+          "url": {
+            "type": "string"
+          },
+          "parameter": {
+            "type": "string"
+          }
         },
-        "required": ["url", "parameter"]
+        "required": [
+          "url",
+          "parameter"
+        ]
       }
     }
   },
@@ -324,9 +520,13 @@
       "parameters": {
         "type": "object",
         "properties": {
-          "path": { "type": "string" }
+          "path": {
+            "type": "string"
+          }
         },
-        "required": ["path"]
+        "required": [
+          "path"
+        ]
       }
     }
   },
@@ -338,9 +538,13 @@
       "parameters": {
         "type": "object",
         "properties": {
-          "domain": { "type": "string" }
+          "domain": {
+            "type": "string"
+          }
         },
-        "required": ["domain"]
+        "required": [
+          "domain"
+        ]
       }
     }
   },
@@ -352,9 +556,13 @@
       "parameters": {
         "type": "object",
         "properties": {
-          "url": { "type": "string" }
+          "url": {
+            "type": "string"
+          }
         },
-        "required": ["url"]
+        "required": [
+          "url"
+        ]
       }
     }
   },
@@ -366,9 +574,13 @@
       "parameters": {
         "type": "object",
         "properties": {
-          "url": { "type": "string" }
+          "url": {
+            "type": "string"
+          }
         },
-        "required": ["url"]
+        "required": [
+          "url"
+        ]
       }
     }
   },
@@ -380,9 +592,13 @@
       "parameters": {
         "type": "object",
         "properties": {
-          "domain": { "type": "string" }
+          "domain": {
+            "type": "string"
+          }
         },
-        "required": ["domain"]
+        "required": [
+          "domain"
+        ]
       }
     }
   },
@@ -394,9 +610,13 @@
       "parameters": {
         "type": "object",
         "properties": {
-          "path": { "type": "string" }
+          "path": {
+            "type": "string"
+          }
         },
-        "required": ["path"]
+        "required": [
+          "path"
+        ]
       }
     }
   },
@@ -408,9 +628,13 @@
       "parameters": {
         "type": "object",
         "properties": {
-          "domain": { "type": "string" }
+          "domain": {
+            "type": "string"
+          }
         },
-        "required": ["domain"]
+        "required": [
+          "domain"
+        ]
       }
     }
   },
@@ -422,9 +646,13 @@
       "parameters": {
         "type": "object",
         "properties": {
-          "html": { "type": "string" }
+          "html": {
+            "type": "string"
+          }
         },
-        "required": ["html"]
+        "required": [
+          "html"
+        ]
       }
     }
   },
@@ -436,9 +664,13 @@
       "parameters": {
         "type": "object",
         "properties": {
-          "url": { "type": "string" }
+          "url": {
+            "type": "string"
+          }
         },
-        "required": ["url"]
+        "required": [
+          "url"
+        ]
       }
     }
   },
@@ -450,9 +682,13 @@
       "parameters": {
         "type": "object",
         "properties": {
-          "token": { "type": "string" }
+          "token": {
+            "type": "string"
+          }
         },
-        "required": ["token"]
+        "required": [
+          "token"
+        ]
       }
     }
   },
@@ -464,9 +700,13 @@
       "parameters": {
         "type": "object",
         "properties": {
-          "html": { "type": "string" }
+          "html": {
+            "type": "string"
+          }
         },
-        "required": ["html"]
+        "required": [
+          "html"
+        ]
       }
     }
   },
@@ -478,10 +718,19 @@
       "parameters": {
         "type": "object",
         "properties": {
-          "summary": { "type": "string", "description": "Summary of what has been achieved so far." },
-          "next_steps": { "type": "string", "description": "Planned actions to achieve the final goal." }
+          "summary": {
+            "type": "string",
+            "description": "Summary of what has been achieved so far."
+          },
+          "next_steps": {
+            "type": "string",
+            "description": "Planned actions to achieve the final goal."
+          }
         },
-        "required": ["summary", "next_steps"]
+        "required": [
+          "summary",
+          "next_steps"
+        ]
       }
     }
   },
@@ -493,11 +742,23 @@
       "parameters": {
         "type": "object",
         "properties": {
-          "url": { "type": "string", "description": "The RAW URL of the script or technique (e.g. from GitHub/Gist)." },
-          "skill_name": { "type": "string", "description": "A descriptive name for this skill." },
-          "category": { "type": "string", "description": "e.g. exploitation, recon, bypass" }
+          "url": {
+            "type": "string",
+            "description": "The RAW URL of the script or technique (e.g. from GitHub/Gist)."
+          },
+          "skill_name": {
+            "type": "string",
+            "description": "A descriptive name for this skill."
+          },
+          "category": {
+            "type": "string",
+            "description": "e.g. exploitation, recon, bypass"
+          }
         },
-        "required": ["url", "skill_name"]
+        "required": [
+          "url",
+          "skill_name"
+        ]
       }
     }
   },
@@ -509,9 +770,14 @@
       "parameters": {
         "type": "object",
         "properties": {
-          "skill_name": { "type": "string", "description": "The full title of the skill (e.g. Skill_XSS_Payloads)." }
+          "skill_name": {
+            "type": "string",
+            "description": "The full title of the skill (e.g. Skill_XSS_Payloads)."
+          }
         },
-        "required": ["skill_name"]
+        "required": [
+          "skill_name"
+        ]
       }
     }
   },
@@ -523,9 +789,405 @@
       "parameters": {
         "type": "object",
         "properties": {
-          "query": { "type": "string", "description": "Search term to find relevant skills." }
+          "query": {
+            "type": "string",
+            "description": "Search term to find relevant skills."
+          }
         },
-        "required": ["query"]
+        "required": [
+          "query"
+        ]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "terminal_spawn",
+      "description": "Spawn a persistent terminal session to execute a command. Use this to run CLI tools like curl, nmap, python scripts, etc.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "command": {
+            "type": "string",
+            "description": "The shell command to execute."
+          },
+          "sessionId": {
+            "type": "string",
+            "description": "A unique identifier for this terminal session."
+          }
+        },
+        "required": [
+          "command",
+          "sessionId"
+        ]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "terminal_interact",
+      "description": "Send input or read new output from an existing persistent terminal session.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "sessionId": {
+            "type": "string",
+            "description": "The unique identifier of the existing terminal session."
+          },
+          "input": {
+            "type": "string",
+            "description": "Text to write to the terminal stdin (optional)."
+          }
+        },
+        "required": [
+          "sessionId"
+        ]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "swarm_coordinate",
+      "description": "Coordinate a parallel swarm of worker AIs to analyze a complex sub-objective.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "objective": {
+            "type": "string",
+            "description": "The specific task for the swarm to analyze."
+          },
+          "context": {
+            "type": "string",
+            "description": "Additional context or evidence."
+          }
+        },
+        "required": [
+          "objective"
+        ]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "search_web",
+      "description": "Perform a general web search for OSINT or recent vulnerabilities.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Search query."
+          }
+        },
+        "required": [
+          "query"
+        ]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "search_github_exploits",
+      "description": "Search GitHub for specific exploit scripts or Proof of Concepts.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "GitHub search query."
+          }
+        },
+        "required": [
+          "query"
+        ]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "record_vulnerability",
+      "description": "Record a confirmed vulnerability into the system memory.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string"
+          },
+          "vector": {
+            "type": "string"
+          },
+          "method": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "success",
+              "failure"
+            ]
+          },
+          "payload": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "vector",
+          "method",
+          "status",
+          "payload"
+        ]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "deliver_final_report",
+      "description": "Submit the final security dossier and conclude the mission.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "report_content": {
+            "type": "string",
+            "description": "The full final report text."
+          }
+        },
+        "required": [
+          "report_content"
+        ]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "add_mcp_server",
+      "description": "Add a new external MCP server.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "command": {
+            "type": "string"
+          },
+          "args": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "command"
+        ]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "list_mcp_servers",
+      "description": "List all currently connected MCP servers.",
+      "parameters": {
+        "type": "object",
+        "properties": {}
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "browse_url",
+      "description": "Alias for fetch_url. Visit a URL and return a snapshot.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "url"
+        ]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "get_request",
+      "description": "Alias for fetch_url. Perform a GET request.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "url"
+        ]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "http_request",
+      "description": "Alias for fetch_url. Perform an HTTP request.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "url"
+        ]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "obsidian_create_note",
+      "description": "Create a note in Obsidian.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "content"
+        ]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "obsidian_create_finding",
+      "description": "Record a security finding in Obsidian.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "severity": {
+            "type": "string"
+          },
+          "evidence": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "severity",
+          "evidence"
+        ]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "obsidian_create_attack_canvas",
+      "description": "Generate an attack canvas in Obsidian.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "target": {
+            "type": "string"
+          },
+          "findings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "target",
+          "findings"
+        ]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "cve_search",
+      "description": "Search the real-time CVE database for vulnerabilities related to a product, vendor, or specific software version.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "The product name, vendor, or software version to search for (e.g., 'nginx 1.18.0', 'apache', 'wordpress')."
+          }
+        },
+        "required": [
+          "query"
+        ]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "emit_insight",
+      "description": "Log a strategic insight or state which skill is being used. Use this to provide real-time tactical feedback to the operator.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "insight": {
+            "type": "string",
+            "description": "The strategic observation or technical insight."
+          },
+          "source_skill": {
+            "type": "string",
+            "description": "Optional: The name of the skill from memory/skills being applied."
+          }
+        },
+        "required": [
+          "insight"
+        ]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "query_tactical_memory",
+      "description": "Search the Obsidian workspace for past skills, findings, reports, or tactical knowledge. Use this to remember how you solved similar problems before.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Keyword or topic to search for in the tactical memory."
+          }
+        },
+        "required": [
+          "query"
+        ]
       }
     }
   }

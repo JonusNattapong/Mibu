@@ -1,5 +1,6 @@
 import fs from "fs/promises";
 import path from "path";
+import os from "os";
 import crypto from "crypto";
 
 export interface ScheduledMission {
@@ -12,8 +13,8 @@ export interface ScheduledMission {
 }
 
 const storePath = path.join(
-  process.cwd(),
-  ".redlock",
+  os.homedir(),
+  ".redrock",
   "scheduled_missions.json",
 );
 

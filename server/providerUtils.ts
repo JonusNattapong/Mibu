@@ -1,4 +1,7 @@
 import { createParser, EventSourceMessage } from "eventsource-parser";
+import * as fs from "fs";
+import * as path from "path";
+import * as os from "os";
 import promptManager from "../engine/promptManager";
 import { logger } from "../src/runtime/logger";
 import * as modelCatalog from "../src/providers/modelCatalog";
@@ -243,6 +246,10 @@ function buildRequestBody(
   if (tools.length > 0) {
     body.tools = tools;
     body.tool_choice = "auto";
+  }
+
+  if (stream && provider !== "anthropic") {
+    body.stream_options = { include_usage: true };
   }
 
   return body;
@@ -510,6 +517,7 @@ function extractContentFromEvent(parsed: any): string {
 export async function analyzeWithProvider(
   payload: AnalysisPayload,
   onChunk?: (c: string) => void,
+  onUsage?: (usage: { prompt_tokens: number; completion_tokens: number; total_tokens: number }) => void,
 ) {
   const providers = modelCatalog.loadProviders();
   const provider = (payload.provider || "openai").toLowerCase();
@@ -580,8 +588,15 @@ export async function analyzeWithProvider(
       if (response.status === 200) break;
 
       const errorData = typeof response.data === "string" ? response.data : JSON.stringify(response.data);
+      let errorMsg = errorData.slice(0, 500);
+      
+      const lowerMsg = errorMsg.toLowerCase();
+      if (response.status === 402 || lowerMsg.includes("balance") || lowerMsg.includes("insufficient") || lowerMsg.includes("credits") || lowerMsg.includes("funds")) {
+        errorMsg = `[CRITICAL_BALANCE_ERROR] Insufficient API balance/credits detected. Tactical advice: Use 'list_tactical_models' to find a [FREE] alternative and 'switch_tactical_model' to continue the mission. Raw Error: ${errorMsg}`;
+      }
+
       lastError = new Error(
-        `Provider request failed (${response.status}): ${errorData.slice(0, 500)}`,
+        `Provider request failed (${response.status}): ${errorMsg}`,
       );
 
       if (response.status !== 429 && response.status < 500) break;
@@ -657,6 +672,7 @@ export async function analyzeWithProvider(
       let streamedText = "";
       let deliveredText = "";
       let hasDeliveredContent = false;
+      const aggregatedToolCalls: Record<number, { id: string, name: string, args: string }> = {};
 
       const parser = createParser({
         onEvent(event: EventSourceMessage) {
@@ -667,7 +683,30 @@ export async function analyzeWithProvider(
 
           try {
             const parsed = JSON.parse(payloadText);
-            content = extractContentFromEvent(parsed);
+            const delta = parsed.choices?.[0]?.delta || parsed.delta;
+            
+            if (delta && delta.tool_calls && Array.isArray(delta.tool_calls)) {
+              for (const tc of delta.tool_calls) {
+                const index = tc.index ?? 0;
+                if (!aggregatedToolCalls[index]) {
+                  aggregatedToolCalls[index] = {
+                    id: tc.id || "",
+                    name: tc.function?.name || "",
+                    args: tc.function?.arguments || "",
+                  };
+                } else {
+                  if (tc.id) aggregatedToolCalls[index].id = tc.id;
+                  if (tc.function?.name) aggregatedToolCalls[index].name += tc.function.name;
+                  if (tc.function?.arguments) aggregatedToolCalls[index].args += tc.function.arguments;
+                }
+              }
+            } else {
+              content = extractContentFromEvent(parsed);
+            }
+            
+            if (parsed.usage) {
+              onUsage?.(parsed.usage);
+            }
           } catch {
             if (typeof payloadText === "string") {
               content = payloadText;
@@ -686,8 +725,21 @@ export async function analyzeWithProvider(
       try {
         for await (const chunk of response.data) {
           const chunkStr = chunk.toString();
+          fs.appendFileSync(path.join(os.homedir(), ".redrock", "stream_debug.log"), chunkStr + "\\n");
           streamedText += chunkStr;
           parser.feed(chunkStr);
+        }
+        
+        // After stream completes, append aggregated tool calls
+        for (const index of Object.keys(aggregatedToolCalls).map(Number).sort((a,b)=>a-b)) {
+           const tc = aggregatedToolCalls[index];
+           if (tc.name) {
+             const idSuffix = tc.id ? ` ID:${tc.id}` : "";
+             const formatted = `\n[Tool Call] ${tc.name}(${tc.args})${idSuffix}\n`;
+             hasDeliveredContent = true;
+             deliveredText += formatted;
+             onChunk!(formatted);
+           }
         }
       } catch (streamError: any) {
         logger.warn(
